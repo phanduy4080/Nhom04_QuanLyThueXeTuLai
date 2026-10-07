@@ -93,10 +93,7 @@ export default function AdminDashboardPage() {
       {/* Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-gray-950 via-slate-900 to-gray-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/20 text-amber-400 text-xs font-bold uppercase tracking-wider">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Hệ Thống Quản Trị Xe Tự Lái QuickHatch</span>
-          </div>
+          
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
             Xin Chào, Quản Trị Viên!
           </h1>

@@ -4,62 +4,7 @@
 > **Kiến trúc**: Client - Server Tách Biệt (Decoupled Full-Stack Architecture)
 
 ---
-
-## 1. Tổng Quan & Bộ Công Nghệ (Tech Stack)
-
-### A. Front-end (Client Portal & Admin Dashboard)
-* **Core Framework**: Next.js 16 (App Router `src/app`), React 19, TypeScript 5 (Strict Mode).
-* **UI & Design System**:
-  * **Tailwind CSS v4** + Indented Sass (`.sass` / CSS Modules) cho design tokens & responsive mixins.
-  * **Shadcn UI** & **Base UI React** (`@base-ui/react`): Bộ component headless chuẩn a11y.
-  * **Lucide React**: Bộ icon vector.
-  * **Swiper 14**: Xử lý Banner Slider, Showcase xe nổi bật & Gallery ảnh nội/ngoại thất.
-* **Form & Data Management**:
-  * **React Hook Form + Zod**: Validate dữ liệu đặt xe, thông tin GPLX/CCCD, form CRUD xe.
-  * **TanStack Query v5 (React Query)**: Quản lý cache server state, phân trang, mutations.
-  * **Zustand v5**: Quản lý client state (Bộ lọc xe, Giỏ booking draft, Auth store, Sidebar).
-  * **Axios**: HTTP client với Interceptors (tự động đính kèm JWT Bearer token, chuẩn hóa lỗi tập trung `ApiError`).
-* **Utilities & Media**:
-  * `@tanstack/react-table`: Xử lý Data Table danh sách xe, hợp đồng, lịch đặt.
-  * `date-fns`: Xử lý ngày giờ thuê, tính thời gian thuê, phụ phí quá hạn.
-  * `react-dropzone`: Tải lên ảnh bằng lái xe GPLX/CCCD và ảnh hiện trạng xe.
-  * `react-to-print` / `jspdf`: Xuất và in Hợp đồng điện tử & Biên bản bàn giao xe tại chỗ.
-  * `sonner`: Toast thông báo trạng thái.
-* **SEO & Security**:
-  * Next.js Middleware: Phân quyền truy cập (RBAC), Content Security Policy (CSP).
-  * SEO Engine (`createMetadata`): Tự động tạo thẻ OpenGraph, Twitter Card, JSON-LD Schema `CarRental` & `Product`.
-
-### B. Back-end (NestJS API Server)
-* **Core Framework**: NestJS 11+ (Node.js + TypeScript), Kiến trúc Modular (`modules/`).
-* **Database & ORM**: **PostgreSQL** kết hợp **Prisma ORM** (Type-safe Schema & Migrations).
-* **Authentication & Authorization**:
-  * JWT Access Token / Refresh Token, Passport.js.
-  * Role-based Access Control (`@Roles('ADMIN', 'STAFF', 'CUSTOMER')`).
-* **Validation & API Documentation**:
-  * `class-validator`, `class-transformer` với Global `ValidationPipe`.
-  * **Swagger / OpenAPI** tự động tạo tài liệu API tại `/api/docs`.
-* **Caching & Queue**:
-  * **Redis**: Cache dữ liệu danh mục xe, rate limit.
-  * `@nestjs/schedule` (Cron Job): Tự động hủy đơn chưa cọc quá hạn 30 phút, nhắc lịch bảo dưỡng xe, cảnh báo xe chưa trả.
-* **Storage & Third-party Integrations**:
-  * **Cloudinary SDK / AWS S3**: Lưu trữ ảnh xe, ảnh GPLX/CCCD của khách, ảnh biên bản bàn giao xe.
-  * **Cổng Thanh Toán**: Tích hợp **PayOS / VietQR Open Banking API / VNPAY Sandbox** (Thanh toán cọc online & Webhook xác nhận tự động).
-  * **Mailer**: **Nodemailer / Resend** (Gửi email hóa đơn, hợp đồng PDF, xác nhận đặt cọc thành công).
-
----
-
-## 2. Sơ Đồ Kiến Trúc Hệ Thống
-
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                               FRONT-END (Next.js 16 Client)                            │
-│  • Framework: Next.js 16 (App Router), React 19, TypeScript 5 (Strict mode)            │
-│  • UI & Styling: Tailwind CSS v4, Indented Sass (.sass), Shadcn UI, Base UI, Lucide   │
-│  • Form & Validation: React Hook Form, Zod                                             │
-│  • Table & Utilities: @tanstack/react-table, date-fns, react-dropzone, Sonner (Toast)  │
-│  • Carousel & Media: Swiper 14, react-to-print (In hợp đồng & Biên bản bàn giao)       │
-│  • State & Fetching: TanStack Query v5, Zustand v5, Axios (Interceptors, ApiError)    │
-└───────────────────────────────────────────┬────────────────────────────────────────────┘
+─────────┬────────────────────────────────────────────┘
                                             │ HTTPS / RESTful API (JSON) + JWT
 ┌───────────────────────────────────────────▼────────────────────────────────────────────┐
 │                                BACK-END (NestJS API Server)                            │
@@ -231,6 +176,61 @@ erDiagram
 ```
 
 ---
+## 1. Tổng Quan & Bộ Công Nghệ (Tech Stack)
+
+### A. Front-end (Client Portal & Admin Dashboard)
+* **Core Framework**: Next.js 16 (App Router `src/app`), React 19, TypeScript 5 (Strict Mode).
+* **UI & Design System**:
+  * **Tailwind CSS v4** + Indented Sass (`.sass` / CSS Modules) cho design tokens & responsive mixins.
+  * **Shadcn UI** & **Base UI React** (`@base-ui/react`): Bộ component headless chuẩn a11y.
+  * **Lucide React**: Bộ icon vector.
+  * **Swiper 14**: Xử lý Banner Slider, Showcase xe nổi bật & Gallery ảnh nội/ngoại thất.
+* **Form & Data Management**:
+  * **React Hook Form + Zod**: Validate dữ liệu đặt xe, thông tin GPLX/CCCD, form CRUD xe.
+  * **TanStack Query v5 (React Query)**: Quản lý cache server state, phân trang, mutations.
+  * **Zustand v5**: Quản lý client state (Bộ lọc xe, Giỏ booking draft, Auth store, Sidebar).
+  * **Axios**: HTTP client với Interceptors (tự động đính kèm JWT Bearer token, chuẩn hóa lỗi tập trung `ApiError`).
+* **Utilities & Media**:
+  * `@tanstack/react-table`: Xử lý Data Table danh sách xe, hợp đồng, lịch đặt.
+  * `date-fns`: Xử lý ngày giờ thuê, tính thời gian thuê, phụ phí quá hạn.
+  * `react-dropzone`: Tải lên ảnh bằng lái xe GPLX/CCCD và ảnh hiện trạng xe.
+  * `react-to-print` / `jspdf`: Xuất và in Hợp đồng điện tử & Biên bản bàn giao xe tại chỗ.
+  * `sonner`: Toast thông báo trạng thái.
+* **SEO & Security**:
+  * Next.js Middleware: Phân quyền truy cập (RBAC), Content Security Policy (CSP).
+  * SEO Engine (`createMetadata`): Tự động tạo thẻ OpenGraph, Twitter Card, JSON-LD Schema `CarRental` & `Product`.
+
+### B. Back-end (NestJS API Server)
+* **Core Framework**: NestJS 11+ (Node.js + TypeScript), Kiến trúc Modular (`modules/`).
+* **Database & ORM**: **PostgreSQL** kết hợp **Prisma ORM** (Type-safe Schema & Migrations).
+* **Authentication & Authorization**:
+  * JWT Access Token / Refresh Token, Passport.js.
+  * Role-based Access Control (`@Roles('ADMIN', 'STAFF', 'CUSTOMER')`).
+* **Validation & API Documentation**:
+  * `class-validator`, `class-transformer` với Global `ValidationPipe`.
+  * **Swagger / OpenAPI** tự động tạo tài liệu API tại `/api/docs`.
+* **Caching & Queue**:
+  * **Redis**: Cache dữ liệu danh mục xe, rate limit.
+  * `@nestjs/schedule` (Cron Job): Tự động hủy đơn chưa cọc quá hạn 30 phút, nhắc lịch bảo dưỡng xe, cảnh báo xe chưa trả.
+* **Storage & Third-party Integrations**:
+  * **Cloudinary SDK / AWS S3**: Lưu trữ ảnh xe, ảnh GPLX/CCCD của khách, ảnh biên bản bàn giao xe.
+  * **Cổng Thanh Toán**: Tích hợp **PayOS / VietQR Open Banking API / VNPAY Sandbox** (Thanh toán cọc online & Webhook xác nhận tự động).
+  * **Mailer**: **Nodemailer / Resend** (Gửi email hóa đơn, hợp đồng PDF, xác nhận đặt cọc thành công).
+
+---
+
+## 2. Sơ Đồ Kiến Trúc Hệ Thống
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               FRONT-END (Next.js 16 Client)                            │
+│  • Framework: Next.js 16 (App Router), React 19, TypeScript 5 (Strict mode)            │
+│  • UI & Styling: Tailwind CSS v4, Indented Sass (.sass), Shadcn UI, Base UI, Lucide   │
+│  • Form & Validation: React Hook Form, Zod                                             │
+│  • Table & Utilities: @tanstack/react-table, date-fns, react-dropzone, Sonner (Toast)  │
+│  • Carousel & Media: Swiper 14, react-to-print (In hợp đồng & Biên bản bàn giao)       │
+│  • State & Fetching: TanStack Query v5, Zustand v5, Axios (Interceptors, ApiError)    │
+└──────────────────────────────────
 
 ## 5. Quy Trình Nghiệp Vụ Cốt Lõi
 

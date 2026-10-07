@@ -1,15 +1,1059 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// =====================================================================
+//  PRISMA SCHEMA - HỆ THỐNG CHO THUÊ XE TỰ LÁI (CAR RENTAL)
+//  Tương thích PostgreSQL Multi-Schema: core, iam, org, fleet, pricing, insurance, crm, booking, rental, finance...
+// =====================================================================
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["core", "iam", "org", "fleet", "pricing", "insurance", "crm", "booking", "rental", "incident", "finance", "maint", "notif", "audit", "rpt"]
+}
+
+// =====================================================================
+// ENUMS
+// =====================================================================
+
+enum UserType {
+  CUSTOMER
+  STAFF
+
+  @@map("user_type")
+  @@schema("iam")
+}
+
+enum AccountStatus {
+  ACTIVE
+  LOCKED
+  DISABLED
+  PENDING_ACTIVATION
+
+  @@map("account_status")
+  @@schema("iam")
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  HELD
+  BOOKED
+  RENTED
+  INSPECTING
+  MAINTENANCE
+  REPAIRING
+  SUSPENDED
+
+  @@map("vehicle_status")
+  @@schema("fleet")
+}
+
+enum TransmissionType {
+  MANUAL
+  AUTOMATIC
+
+  @@map("transmission_type")
+  @@schema("fleet")
+}
+
+enum FuelType {
+  GASOLINE
+  DIESEL
+  ELECTRIC
+  HYBRID
+  PLUGIN_HYBRID
+  LPG
+
+  @@map("fuel_type")
+  @@schema("fleet")
+}
+
+enum BlockType {
+  HOLD
+  BOOKING
+  RENTAL
+  MAINTENANCE
+  REPAIR
+  INSPECTION
+  SUSPENSION
+
+  @@map("block_type")
+  @@schema("fleet")
+}
+
+enum VehicleDocType {
+  REGISTRATION
+  INSPECTION_CERT
+  ROAD_FEE
+  OTHER
+
+  @@map("vehicle_doc_type")
+  @@schema("fleet")
+}
+
+enum PriceScope {
+  VEHICLE
+  MODEL
+  CATEGORY
+
+  @@map("price_scope")
+  @@schema("pricing")
+}
+
+enum PricePlanType {
+  DAILY
+  PERIOD
+
+  @@map("price_plan_type")
+  @@schema("pricing")
+}
+
+enum RuleType {
+  WEEKEND
+  HOLIDAY
+  PEAK_SEASON
+  EARLY_BIRD
+  LONG_TERM
+  ONE_WAY
+  CUSTOM
+
+  @@map("rule_type")
+  @@schema("pricing")
+}
+
+enum AdjustType {
+  PERCENT
+  FIXED_PER_DAY
+  FIXED_TOTAL
+
+  @@map("adjust_type")
+  @@schema("pricing")
+}
+
+enum PromoType {
+  PERCENT
+  FIXED
+
+  @@map("promo_type")
+  @@schema("pricing")
+}
+
+enum FuelPolicy {
+  SAME_TO_SAME
+  PREPAID_FULL
+  FREE
+
+  @@map("fuel_policy")
+  @@schema("pricing")
+}
+
+enum PolicyKind {
+  COMPULSORY_TPL
+  PHYSICAL_DAMAGE
+  PASSENGER_ACCIDENT
+  OTHER
+
+  @@map("policy_kind")
+  @@schema("insurance")
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+  OTHER
+
+  @@map("gender_type")
+  @@schema("crm")
+}
+
+enum CustomerType {
+  INDIVIDUAL
+  CORPORATE
+
+  @@map("customer_type")
+  @@schema("crm")
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+  EXPIRED
+
+  @@map("verification_status")
+  @@schema("crm")
+}
+
+enum IdDocType {
+  NATIONAL_ID
+  CITIZEN_ID
+  PASSPORT
+  RESIDENCE_CARD
+
+  @@map("id_doc_type")
+  @@schema("crm")
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  BLACKLISTED
+
+  @@map("risk_level")
+  @@schema("crm")
+}
+
+// =====================================================================
+// CORE SCHEMA
+// =====================================================================
+
+model Setting {
+  settingKey  String   @id @map("setting_key")
+  value       String
+  valueType   String   @default("string") @map("value_type")
+  description String?
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  updatedBy   BigInt?  @map("updated_by")
+
+  @@map("settings")
+  @@schema("core")
+}
+
+model File {
+  fileId          BigInt    @id @default(autoincrement()) @map("file_id")
+  publicId        String    @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  storageProvider String    @default("s3") @map("storage_provider")
+  bucket          String?
+  objectKey       String    @map("object_key")
+  originalName    String?   @map("original_name")
+  mimeType        String?   @map("mime_type")
+  sizeBytes       BigInt?   @map("size_bytes")
+  checksumSha256  String?   @map("checksum_sha256")
+  isPrivate       Boolean   @default(true) @map("is_private")
+  uploadedBy      BigInt?   @map("uploaded_by")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  uploadedByUser    User?               @relation("UserFiles", fields: [uploadedBy], references: [userId])
+  brands            Brand[]
+  vehicleImages     VehicleImage[]
+  vehicleDocuments  VehicleDocument[]
+  vehiclePolicies   VehiclePolicy[]
+  idDocFrontFiles   IdentityDocument[]  @relation("IdFrontFile")
+  idDocBackFiles    IdentityDocument[]  @relation("IdBackFile")
+  idDocSelfieFiles  IdentityDocument[]  @relation("IdSelfieFile")
+  licenseFrontFiles DriverLicense[]     @relation("LicenseFrontFile")
+  licenseBackFiles  DriverLicense[]     @relation("LicenseBackFile")
+
+  @@unique([storageProvider, bucket, objectKey])
+  @@map("files")
+  @@schema("core")
+}
+
+// =====================================================================
+// IAM SCHEMA
+// =====================================================================
+
+model User {
+  userId           BigInt        @id @default(autoincrement()) @map("user_id")
+  publicId         String        @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  userType         UserType      @map("user_type")
+  email            String?       @unique
+  phone            String?       @unique
+  passwordHash     String?       @map("password_hash")
+  status           AccountStatus @default(PENDING_ACTIVATION)
+  emailVerifiedAt  DateTime?     @map("email_verified_at")
+  phoneVerifiedAt  DateTime?     @map("phone_verified_at")
+  mfaEnabled       Boolean       @default(false) @map("mfa_enabled")
+  failedLoginCount Int           @default(0) @map("failed_login_count") @db.SmallInt
+  lockedUntil      DateTime?     @map("locked_until")
+  lastLoginAt      DateTime?     @map("last_login_at")
+  lastLoginIp      String?       @map("last_login_ip")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at")
+  deletedAt        DateTime?     @map("deleted_at")
+
+  userRoles               UserRole[]
+  grantedRoles            UserRole[]                 @relation("RoleGrantedBy")
+  loginHistories          LoginHistory[]
+  staff                   Staff?
+  customer                Customer?
+  files                   File[]                     @relation("UserFiles")
+  createdVehicles         Vehicle[]                  @relation("VehicleCreatedBy")
+  statusHistories         VehicleStatusHistory[]     @relation("VshChangedBy")
+  odometerLogs            VehicleOdometerLog[]       @relation("OdoRecordedBy")
+  availabilityBlocks      VehicleAvailabilityBlock[] @relation("BlockCreatedBy")
+  createdPricePlans       PricePlan[]                @relation("PlanCreatedBy")
+  verifiedIdDocs          IdentityDocument[]         @relation("IdDocVerifiedBy")
+  verifiedLicenses        DriverLicense[]            @relation("LicenseVerifiedBy")
+  listedBlacklists        CustomerBlacklist[]        @relation("BlacklistListedBy")
+  liftedBlacklists        CustomerBlacklist[]        @relation("BlacklistLiftedBy")
+
+  @@map("users")
+  @@schema("iam")
+}
+
+model Role {
+  roleId      Int       @id @default(autoincrement()) @map("role_id")
+  code        String    @unique
+  name        String
+  description String?
+  isSystem    Boolean   @default(false) @map("is_system")
+
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@map("roles")
+  @@schema("iam")
+}
+
+model Permission {
+  permissionId Int     @id @default(autoincrement()) @map("permission_id")
+  code         String  @unique
+  module       String
+  description  String?
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+  @@schema("iam")
+}
+
+model RolePermission {
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [permissionId], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+  @@schema("iam")
+}
+
+model UserRole {
+  userId    BigInt   @map("user_id")
+  roleId    Int      @map("role_id")
+  grantedAt DateTime @default(now()) @map("granted_at")
+  grantedBy BigInt?  @map("granted_by")
+
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [roleId], onDelete: Cascade)
+  grantor   User?    @relation("RoleGrantedBy", fields: [grantedBy], references: [userId])
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+  @@schema("iam")
+}
+
+model LoginHistory {
+  loginId    BigInt   @id @default(autoincrement()) @map("login_id")
+  userId     BigInt?  @map("user_id")
+  identifier String?
+  success    Boolean
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [userId], onDelete: SetNull)
+
+  @@index([userId, createdAt(sort: Desc)], map: "ix_login_history_user")
+  @@map("login_history")
+  @@schema("iam")
+}
+
+model Staff {
+  staffId        BigInt    @id @default(autoincrement()) @map("staff_id")
+  userId         BigInt    @unique @map("user_id")
+  staffCode      String    @unique @map("staff_code")
+  fullName       String    @map("full_name")
+  branchId       Int?      @map("branch_id")
+  position       String?
+  department     String?
+  phone          String?
+  hiredDate      DateTime? @map("hired_date") @db.Date
+  terminatedDate DateTime? @map("terminated_date") @db.Date
+  isActive       Boolean   @default(true) @map("is_active")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [userId])
+  branch Branch? @relation(fields: [branchId], references: [branchId])
+
+  @@map("staff")
+  @@schema("iam")
+}
+
+// =====================================================================
+// ORG SCHEMA
+// =====================================================================
+
+model Branch {
+  branchId      Int      @id @default(autoincrement()) @map("branch_id")
+  code          String   @unique
+  name          String
+  addressLine   String   @map("address_line")
+  ward          String?
+  district      String?
+  province      String
+  latitude      Decimal? @db.Decimal(9, 6)
+  longitude     Decimal? @db.Decimal(9, 6)
+  phone         String?
+  email         String?
+  isPickupPoint Boolean  @default(true) @map("is_pickup_point")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at")
+
+  branchHours BranchHour[]
+  staffList   Staff[]
+  vehicles    Vehicle[]
+  pricePlans  PricePlan[]
+  priceRules  PriceRule[]
+
+  @@index([province], map: "ix_branches_province")
+  @@map("branches")
+  @@schema("org")
+}
+
+model BranchHour {
+  branchId  Int      @map("branch_id")
+  dayOfWeek Int      @map("day_of_week") @db.SmallInt
+  openTime  String?  @map("open_time")
+  closeTime String?  @map("close_time")
+  isClosed  Boolean  @default(false) @map("is_closed")
+
+  branch Branch @relation(fields: [branchId], references: [branchId], onDelete: Cascade)
+
+  @@id([branchId, dayOfWeek])
+  @@map("branch_hours")
+  @@schema("org")
+}
+
+// =====================================================================
+// FLEET SCHEMA
+// =====================================================================
+
+model VehicleCategory {
+  categoryId            Int      @id @default(autoincrement()) @map("category_id")
+  code                  String   @unique
+  name                  String
+  description           String?
+  requiredLicenseClasses String[] @default(["B1", "B2"]) @map("required_license_classes")
+  sortOrder             Int      @default(0) @map("sort_order")
+  isActive              Boolean  @default(true) @map("is_active")
+  defaultPolicyId       Int?     @map("default_policy_id")
+
+  defaultPolicy RentalPolicy?  @relation(fields: [defaultPolicyId], references: [policyId])
+  models        VehicleModel[]
+  pricePlans    PricePlan[]
+  priceRules    PriceRule[]
+
+  @@map("vehicle_categories")
+  @@schema("fleet")
+}
+
+model Brand {
+  brandId    Int     @id @default(autoincrement()) @map("brand_id")
+  name       String  @unique
+  country    String?
+  logoFileId BigInt? @map("logo_file_id")
+  isActive   Boolean @default(true) @map("is_active")
+
+  logoFile File?          @relation(fields: [logoFileId], references: [fileId])
+  models   VehicleModel[]
+
+  @@map("brands")
+  @@schema("fleet")
+}
+
+model VehicleModel {
+  modelId                Int              @id @default(autoincrement()) @map("model_id")
+  brandId                Int              @map("brand_id")
+  categoryId             Int              @map("category_id")
+  name                   String
+  variant                String           @default("")
+  seats                  Int              @db.SmallInt
+  doors                  Int?             @db.SmallInt
+  transmission           TransmissionType
+  fuelType               FuelType         @map("fuel_type")
+  engineCc               Int?             @map("engine_cc")
+  powerHp                Int?             @map("power_hp")
+  fuelTankLiters         Decimal?         @map("fuel_tank_liters") @db.Decimal(6, 1)
+  batteryKwh             Decimal?         @map("battery_kwh") @db.Decimal(6, 1)
+  evRangeKm              Int?             @map("ev_range_km")
+  trunkLiters            Int?             @map("trunk_liters")
+  fuelConsumptionL100km  Decimal?         @map("fuel_consumption_l100km") @db.Decimal(4, 1)
+  launchYear             Int?             @map("launch_year") @db.SmallInt
+  isActive               Boolean          @default(true) @map("is_active")
+  createdAt              DateTime         @default(now()) @map("created_at")
+
+  brand      Brand           @relation(fields: [brandId], references: [brandId])
+  category   VehicleCategory @relation(fields: [categoryId], references: [categoryId])
+  vehicles   Vehicle[]
+  pricePlans PricePlan[]
+
+  @@unique([brandId, name, variant, transmission, fuelType])
+  @@index([categoryId], map: "ix_models_category")
+  @@map("vehicle_models")
+  @@schema("fleet")
+}
+
+model VehicleFeature {
+  featureId Int     @id @default(autoincrement()) @map("feature_id")
+  code      String  @unique
+  name      String
+  icon      String?
+
+  featureMaps VehicleFeatureMap[]
+
+  @@map("vehicle_features")
+  @@schema("fleet")
+}
+
+model Vehicle {
+  vehicleId        BigInt           @id @default(autoincrement()) @map("vehicle_id")
+  publicId         String           @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  assetCode        String?          @unique @map("asset_code")
+  licensePlate     String           @map("license_plate")
+  vin              String?
+  engineNumber     String?          @map("engine_number")
+  modelId          Int              @map("model_id")
+  manufactureYear  Int?             @map("manufacture_year") @db.SmallInt
+  color            String?
+  seats            Int?             @db.SmallInt
+  transmission     TransmissionType
+  fuelType         FuelType         @map("fuel_type")
+  odometerKm       Int              @default(0) @map("odometer_km")
+  fuelLevelPercent Decimal?         @map("fuel_level_percent") @db.Decimal(5, 2)
+  currentBranchId  Int?             @map("current_branch_id")
+  status           VehicleStatus    @default(AVAILABLE)
+  statusChangedAt  DateTime         @default(now()) @map("status_changed_at")
+  listPricePerDay  Decimal          @map("list_price_per_day") @db.Decimal(12, 2)
+  depositAmount    Decimal          @default(0) @map("deposit_amount") @db.Decimal(12, 2)
+  dailyKmLimit     Int?             @map("daily_km_limit")
+  extraKmFee       Decimal?         @map("extra_km_fee") @db.Decimal(12, 2)
+  policyId         Int?             @map("policy_id")
+  ownershipType    String           @default("OWNED") @map("ownership_type")
+  purchaseDate     DateTime?        @map("purchase_date") @db.Date
+  purchasePrice    Decimal?         @map("purchase_price") @db.Decimal(15, 2)
+  gpsDeviceId      String?          @map("gps_device_id")
+  isActive         Boolean          @default(true) @map("is_active")
+  notes            String?
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @default(now()) @updatedAt @map("updated_at")
+  createdBy        BigInt?          @map("created_by")
+  deletedAt        DateTime?        @map("deleted_at")
+
+  model              VehicleModel                 @relation(fields: [modelId], references: [modelId])
+  currentBranch      Branch?                      @relation(fields: [currentBranchId], references: [branchId])
+  policy             RentalPolicy?                @relation(fields: [policyId], references: [policyId])
+  creator            User?                        @relation("VehicleCreatedBy", fields: [createdBy], references: [userId])
+  featureMaps        VehicleFeatureMap[]
+  images             VehicleImage[]
+  documents          VehicleDocument[]
+  statusHistories    VehicleStatusHistory[]
+  odometerLogs       VehicleOdometerLog[]
+  availabilityBlocks VehicleAvailabilityBlock[]
+  pricePlans         PricePlan[]
+  vehiclePolicies    VehiclePolicy[]
+
+  @@index([status], map: "ix_vehicles_status")
+  @@index([currentBranchId], map: "ix_vehicles_branch")
+  @@index([modelId], map: "ix_vehicles_model")
+  @@map("vehicles")
+  @@schema("fleet")
+}
+
+model VehicleFeatureMap {
+  vehicleId BigInt @map("vehicle_id")
+  featureId Int    @map("feature_id")
+
+  vehicle Vehicle        @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  feature VehicleFeature @relation(fields: [featureId], references: [featureId])
+
+  @@id([vehicleId, featureId])
+  @@map("vehicle_feature_map")
+  @@schema("fleet")
+}
+
+model VehicleImage {
+  imageId   BigInt   @id @default(autoincrement()) @map("image_id")
+  vehicleId BigInt   @map("vehicle_id")
+  fileId    BigInt   @map("file_id")
+  sortOrder Int      @default(0) @map("sort_order")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  caption   String?
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  file    File    @relation(fields: [fileId], references: [fileId])
+
+  @@map("vehicle_images")
+  @@schema("fleet")
+}
+
+model VehicleDocument {
+  docId            BigInt         @id @default(autoincrement()) @map("doc_id")
+  vehicleId        BigInt         @map("vehicle_id")
+  docType          VehicleDocType @map("doc_type")
+  docNumber        String?        @map("doc_number")
+  issueDate        DateTime?      @map("issue_date") @db.Date
+  expiryDate       DateTime?      @map("expiry_date") @db.Date
+  issuingAuthority String?        @map("issuing_authority")
+  alertDaysBefore  Int            @default(30) @map("alert_days_before")
+  fileId           BigInt?        @map("file_id")
+  notes            String?
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  file    File?   @relation(fields: [fileId], references: [fileId])
+
+  @@index([expiryDate], map: "ix_vehicle_docs_expiry")
+  @@index([vehicleId, docType], map: "ix_vehicle_docs_vehicle")
+  @@map("vehicle_documents")
+  @@schema("fleet")
+}
+
+model VehicleStatusHistory {
+  historyId  BigInt         @id @default(autoincrement()) @map("history_id")
+  vehicleId  BigInt         @map("vehicle_id")
+  fromStatus VehicleStatus? @map("from_status")
+  toStatus   VehicleStatus  @map("to_status")
+  reason     String?
+  sourceType String?        @map("source_type")
+  sourceId   BigInt?        @map("source_id")
+  changedBy  BigInt?        @map("changed_by")
+  changedAt  DateTime       @default(now()) @map("changed_at")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  user    User?   @relation("VshChangedBy", fields: [changedBy], references: [userId])
+
+  @@index([vehicleId, changedAt(sort: Desc)], map: "ix_vsh_vehicle")
+  @@map("vehicle_status_history")
+  @@schema("fleet")
+}
+
+model VehicleOdometerLog {
+  logId            BigInt   @id @default(autoincrement()) @map("log_id")
+  vehicleId        BigInt   @map("vehicle_id")
+  odometerKm       Int      @map("odometer_km")
+  fuelLevelPercent Decimal? @map("fuel_level_percent") @db.Decimal(5, 2)
+  sourceType       String   @map("source_type")
+  sourceId         BigInt?  @map("source_id")
+  recordedAt       DateTime @default(now()) @map("recorded_at")
+  recordedBy       BigInt?  @map("recorded_by")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  user    User?   @relation("OdoRecordedBy", fields: [recordedBy], references: [userId])
+
+  @@index([vehicleId, recordedAt(sort: Desc)], map: "ix_odo_vehicle")
+  @@map("vehicle_odometer_logs")
+  @@schema("fleet")
+}
+
+model VehicleAvailabilityBlock {
+  blockId       BigInt    @id @default(autoincrement()) @map("block_id")
+  vehicleId     BigInt    @map("vehicle_id")
+  blockType     BlockType @map("block_type")
+  isActive      Boolean   @default(true) @map("is_active")
+  refType       String?   @map("ref_type")
+  refId         BigInt?   @map("ref_id")
+  holdExpiresAt DateTime? @map("hold_expires_at")
+  note          String?
+  createdBy     BigInt?   @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  releasedAt    DateTime? @map("released_at")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  user    User?   @relation("BlockCreatedBy", fields: [createdBy], references: [userId])
+
+  @@index([vehicleId, blockType], map: "ix_blocks_vehicle")
+  @@index([refType, refId], map: "ix_blocks_ref")
+  @@map("vehicle_availability_blocks")
+  @@schema("fleet")
+}
+
+// =====================================================================
+// PRICING SCHEMA
+// =====================================================================
+
+model RentalPolicy {
+  policyId                   Int        @id @default(autoincrement()) @map("policy_id")
+  code                       String     @unique
+  name                       String
+  description                String?
+  minDriverAge               Int        @default(21) @map("min_driver_age") @db.SmallInt
+  maxDriverAge               Int?       @map("max_driver_age") @db.SmallInt
+  minLicenseYears            Decimal    @default(1) @map("min_license_years") @db.Decimal(3, 1)
+  maxSeriousIncidents12m     Int        @default(2) @map("max_serious_incidents_12m") @db.SmallInt
+  requireVerification        Boolean    @default(true) @map("require_verification")
+  maxAdditionalDrivers       Int        @default(2) @map("max_additional_drivers") @db.SmallInt
+  additionalDriverFeePerDay  Decimal    @default(0) @map("additional_driver_fee_per_day") @db.Decimal(12, 2)
+  minRentalHours             Int        @default(4) @map("min_rental_hours")
+  maxRentalDays              Int        @default(90) @map("max_rental_days")
+  graceMinutes               Int        @default(60) @map("grace_minutes")
+  lateFeePercentPerHour      Decimal    @default(10) @map("late_fee_percent_per_hour") @db.Decimal(5, 2)
+  lateDayMultiplier          Decimal    @default(1.5) @map("late_day_multiplier") @db.Decimal(4, 2)
+  extraKmFee                 Decimal    @default(5000) @map("extra_km_fee") @db.Decimal(12, 2)
+  fuelPolicy                 FuelPolicy @default(SAME_TO_SAME) @map("fuel_policy")
+  fuelShortageFeePerPercent  Decimal    @default(20000) @map("fuel_shortage_fee_per_percent") @db.Decimal(12, 2)
+  cleaningFee                Decimal    @default(200000) @map("cleaning_fee") @db.Decimal(12, 2)
+  maxExtensionDays           Int        @default(30) @map("max_extension_days")
+  extensionMinNoticeHours    Int        @default(6) @map("extension_min_notice_hours")
+  depositPercentOfRent       Decimal?   @map("deposit_percent_of_rent") @db.Decimal(5, 2)
+  termsText                  String?    @map("terms_text")
+  insuranceTermsText         String?    @map("insurance_terms_text")
+  liabilityTermsText         String?    @map("liability_terms_text")
+  isActive                   Boolean    @default(true) @map("is_active")
+  createdAt                  DateTime   @default(now()) @map("created_at")
+  updatedAt                  DateTime   @default(now()) @updatedAt @map("updated_at")
+
+  cancellationRules CancellationRule[]
+  categories        VehicleCategory[]
+  vehicles          Vehicle[]
+
+  @@map("rental_policies")
+  @@schema("pricing")
+}
+
+model CancellationRule {
+  ruleId         Int     @id @default(autoincrement()) @map("rule_id")
+  policyId       Int     @map("policy_id")
+  hoursBeforeMin Int     @map("hours_before_min")
+  hoursBeforeMax Int?    @map("hours_before_max")
+  feePercent     Decimal @default(0) @map("fee_percent") @db.Decimal(5, 2)
+  feeFixed       Decimal @default(0) @map("fee_fixed") @db.Decimal(12, 2)
+  description    String?
+
+  policy RentalPolicy @relation(fields: [policyId], references: [policyId], onDelete: Cascade)
+
+  @@index([policyId, hoursBeforeMin], map: "ix_cancel_rules_policy")
+  @@map("cancellation_rules")
+  @@schema("pricing")
+}
+
+model PricePlan {
+  planId     BigInt        @id @default(autoincrement()) @map("plan_id")
+  name       String
+  planType   PricePlanType @default(DAILY) @map("plan_type")
+  scope      PriceScope
+  vehicleId  BigInt?       @map("vehicle_id")
+  modelId    Int?          @map("model_id")
+  categoryId Int?          @map("category_id")
+  branchId   Int?          @map("branch_id")
+  validFrom  DateTime      @default(now()) @map("valid_from") @db.Date
+  validTo    DateTime?     @map("valid_to") @db.Date
+  priority   Int           @default(100)
+  currency   String        @default("VND") @db.Char(3)
+  isActive   Boolean       @default(true) @map("is_active")
+  note       String?
+  createdBy  BigInt?       @map("created_by")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at")
+
+  vehicle    Vehicle?         @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  model      VehicleModel?    @relation(fields: [modelId], references: [modelId], onDelete: Cascade)
+  category   VehicleCategory? @relation(fields: [categoryId], references: [categoryId], onDelete: Cascade)
+  branch     Branch?          @relation(fields: [branchId], references: [branchId])
+  creator    User?            @relation("PlanCreatedBy", fields: [createdBy], references: [userId])
+  priceTiers PriceTier[]
+
+  @@index([vehicleId], map: "ix_price_plans_vehicle")
+  @@index([modelId], map: "ix_price_plans_model")
+  @@index([categoryId], map: "ix_price_plans_category")
+  @@map("price_plans")
+  @@schema("pricing")
+}
+
+model PriceTier {
+  tierId      BigInt   @id @default(autoincrement()) @map("tier_id")
+  planId      BigInt   @map("plan_id")
+  minDays     Int      @default(1) @map("min_days")
+  maxDays     Int?     @map("max_days")
+  pricePerDay Decimal  @map("price_per_day") @db.Decimal(12, 2)
+
+  plan PricePlan @relation(fields: [planId], references: [planId], onDelete: Cascade)
+
+  @@unique([planId, minDays])
+  @@map("price_tiers")
+  @@schema("pricing")
+}
+
+model Holiday {
+  holidayId   Int      @id @default(autoincrement()) @map("holiday_id")
+  holidayDate DateTime @map("holiday_date") @db.Date
+  name        String
+  country     String   @default("VN") @db.Char(2)
+
+  @@unique([holidayDate, country])
+  @@map("holidays")
+  @@schema("pricing")
+}
+
+model PriceRule {
+  ruleId        BigInt     @id @default(autoincrement()) @map("rule_id")
+  name          String
+  ruleType      RuleType   @map("rule_type")
+  adjustType    AdjustType @default(PERCENT) @map("adjust_type")
+  adjustValue   Decimal    @map("adjust_value") @db.Decimal(12, 2)
+  categoryId    Int?       @map("category_id")
+  branchId      Int?       @map("branch_id")
+  validFrom     DateTime?  @map("valid_from") @db.Date
+  validTo       DateTime?  @map("valid_to") @db.Date
+  daysOfWeek    Int[]      @map("days_of_week") @db.SmallInt
+  minRentalDays Int?       @map("min_rental_days")
+  priority      Int        @default(100)
+  isActive      Boolean    @default(true) @map("is_active")
+
+  category VehicleCategory? @relation(fields: [categoryId], references: [categoryId])
+  branch   Branch?          @relation(fields: [branchId], references: [branchId])
+
+  @@map("price_rules")
+  @@schema("pricing")
+}
+
+model Extra {
+  extraId     Int     @id @default(autoincrement()) @map("extra_id")
+  code        String  @unique
+  name        String
+  description String?
+  price       Decimal @db.Decimal(12, 2)
+  priceUnit   String  @default("PER_RENTAL") @map("price_unit")
+  isActive    Boolean @default(true) @map("is_active")
+
+  @@map("extras")
+  @@schema("pricing")
+}
+
+model Promotion {
+  promotionId      Int       @id @default(autoincrement()) @map("promotion_id")
+  code             String    @unique
+  name             String
+  description      String?
+  promoType        PromoType @map("promo_type")
+  value            Decimal   @db.Decimal(12, 2)
+  maxDiscount      Decimal?  @map("max_discount") @db.Decimal(12, 2)
+  minOrderAmount   Decimal   @default(0) @map("min_order_amount") @db.Decimal(12, 2)
+  minRentalDays    Int       @default(1) @map("min_rental_days")
+  categoryIds      Int[]     @map("category_ids")
+  validFrom        DateTime  @default(now()) @map("valid_from")
+  validTo          DateTime? @map("valid_to")
+  usageLimit       Int?      @map("usage_limit")
+  usagePerCustomer Int       @default(1) @map("usage_per_customer")
+  usedCount        Int       @default(0) @map("used_count")
+  isActive         Boolean   @default(true) @map("is_active")
+
+  @@map("promotions")
+  @@schema("pricing")
+}
+
+// =====================================================================
+// INSURANCE SCHEMA
+// =====================================================================
+
+model Insurer {
+  insurerId    Int     @id @default(autoincrement()) @map("insurer_id")
+  name         String  @unique
+  taxCode      String? @map("tax_code")
+  hotline      String?
+  email        String?
+  claimContact String? @map("claim_contact")
+  address      String?
+  isActive     Boolean @default(true) @map("is_active")
+
+  vehiclePolicies VehiclePolicy[]
+
+  @@map("insurers")
+  @@schema("insurance")
+}
+
+model VehiclePolicy {
+  vehiclePolicyId BigInt     @id @default(autoincrement()) @map("vehicle_policy_id")
+  vehicleId       BigInt     @map("vehicle_id")
+  insurerId       Int        @map("insurer_id")
+  kind            PolicyKind
+  policyNumber    String     @map("policy_number")
+  startDate       DateTime   @map("start_date") @db.Date
+  endDate         DateTime   @map("end_date") @db.Date
+  premium         Decimal?   @db.Decimal(14, 2)
+  sumInsured      Decimal?   @map("sum_insured") @db.Decimal(15, 2)
+  deductible      Decimal    @default(0) @db.Decimal(14, 2)
+  alertDaysBefore Int        @default(30) @map("alert_days_before")
+  fileId          BigInt?    @map("file_id")
+  isActive        Boolean    @default(true) @map("is_active")
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  insurer Insurer @relation(fields: [insurerId], references: [insurerId])
+  file    File?   @relation(fields: [fileId], references: [fileId])
+
+  @@unique([insurerId, policyNumber])
+  @@index([vehicleId, kind], map: "ix_vpol_vehicle")
+  @@index([endDate], map: "ix_vpol_end")
+  @@map("vehicle_policies")
+  @@schema("insurance")
+}
+
+model RentalPackage {
+  packageId          Int     @id @default(autoincrement()) @map("package_id")
+  code               String  @unique
+  name               String
+  description        String?
+  pricePerDay        Decimal @default(0) @map("price_per_day") @db.Decimal(12, 2)
+  customerDeductible Decimal @default(0) @map("customer_deductible") @db.Decimal(14, 2)
+  coverageLimit      Decimal? @map("coverage_limit") @db.Decimal(15, 2)
+  coverageText       String? @map("coverage_text")
+  isDefault          Boolean @default(false) @map("is_default")
+  isActive           Boolean @default(true) @map("is_active")
+
+  @@map("rental_packages")
+  @@schema("insurance")
+}
+
+// =====================================================================
+// CRM SCHEMA
+// =====================================================================
+
+model LicenseClass {
+  code        String  @id
+  description String
+  maxSeats    Int?    @map("max_seats") @db.SmallInt
+  minAge      Int?    @map("min_age") @db.SmallInt
+
+  driverLicenses DriverLicense[]
+
+  @@map("license_classes")
+  @@schema("crm")
+}
+
+model Customer {
+  customerId            BigInt             @id @default(autoincrement()) @map("customer_id")
+  publicId              String             @unique @default(dbgenerated("gen_random_uuid()")) @map("public_id") @db.Uuid
+  customerCode          String             @unique @map("customer_code")
+  userId                BigInt?            @unique @map("user_id")
+  customerType          CustomerType       @default(INDIVIDUAL) @map("customer_type")
+  fullName              String             @map("full_name")
+  dateOfBirth           DateTime?          @map("date_of_birth") @db.Date
+  gender                GenderType?
+  nationality           String             @default("VN") @db.Char(2)
+  phone                 String?
+  email                 String?
+  addressLine           String?            @map("address_line")
+  ward                  String?
+  district              String?
+  province              String?
+  companyName           String?            @map("company_name")
+  taxCode               String?            @map("tax_code")
+  companyAddress        String?            @map("company_address")
+  emergencyContactName  String?            @map("emergency_contact_name")
+  emergencyContactPhone String?            @map("emergency_contact_phone")
+  verificationStatus    VerificationStatus @default(UNVERIFIED) @map("verification_status")
+  riskLevel             RiskLevel          @default(LOW) @map("risk_level")
+  completedRentals      Int                @default(0) @map("completed_rentals")
+  loyaltyPoints         Int                @default(0) @map("loyalty_points")
+  marketingOptIn        Boolean            @default(false) @map("marketing_opt_in")
+  preferredLanguage     String             @default("vi") @map("preferred_language")
+  notes                 String?
+  createdAt             DateTime           @default(now()) @map("created_at")
+  updatedAt             DateTime           @default(now()) @updatedAt @map("updated_at")
+  deletedAt             DateTime?          @map("deleted_at")
+
+  user               User?              @relation(fields: [userId], references: [userId])
+  identityDocuments  IdentityDocument[]
+  driverLicenses     DriverLicense[]
+  blacklists         CustomerBlacklist[]
+
+  @@index([phone], map: "ix_customers_phone")
+  @@index([email], map: "ix_customers_email")
+  @@map("customers")
+  @@schema("crm")
+}
+
+model IdentityDocument {
+  docId            BigInt             @id @default(autoincrement()) @map("doc_id")
+  customerId       BigInt             @map("customer_id")
+  docType          IdDocType          @map("doc_type")
+  docNumber        String             @map("doc_number")
+  fullNameOnDoc    String?            @map("full_name_on_doc")
+  dateOfBirthOnDoc DateTime?          @map("date_of_birth_on_doc") @db.Date
+  issueDate        DateTime?          @map("issue_date") @db.Date
+  issuePlace       String?            @map("issue_place")
+  expiryDate       DateTime?          @map("expiry_date") @db.Date
+  frontFileId      BigInt?            @map("front_file_id")
+  backFileId       BigInt?            @map("back_file_id")
+  selfieFileId     BigInt?            @map("selfie_file_id")
+  status           VerificationStatus @default(PENDING)
+  verifiedBy       BigInt?            @map("verified_by")
+  verifiedAt       DateTime?          @map("verified_at")
+  rejectReason     String?            @map("reject_reason")
+  isCurrent        Boolean            @default(true) @map("is_current")
+  createdAt        DateTime           @default(now()) @map("created_at")
+
+  customer   Customer @relation(fields: [customerId], references: [customerId], onDelete: Cascade)
+  frontFile  File?    @relation("IdFrontFile", fields: [frontFileId], references: [fileId])
+  backFile   File?    @relation("IdBackFile", fields: [backFileId], references: [fileId])
+  selfieFile File?    @relation("IdSelfieFile", fields: [selfieFileId], references: [fileId])
+  verifier   User?    @relation("IdDocVerifiedBy", fields: [verifiedBy], references: [userId])
+
+  @@unique([docType, docNumber, customerId])
+  @@index([docNumber], map: "ix_idoc_number")
+  @@map("identity_documents")
+  @@schema("crm")
+}
+
+model DriverLicense {
+  licenseId       BigInt             @id @default(autoincrement()) @map("license_id")
+  customerId      BigInt             @map("customer_id")
+  licenseNumber   String             @map("license_number")
+  licenseClass    String             @map("license_class")
+  issuedCountry   String             @default("VN") @map("issued_country") @db.Char(2)
+  isInternational Boolean            @default(false) @map("is_international")
+  issueDate       DateTime           @map("issue_date") @db.Date
+  expiryDate      DateTime?          @map("expiry_date") @db.Date
+  issuePlace      String?            @map("issue_place")
+  frontFileId     BigInt?            @map("front_file_id")
+  backFileId      BigInt?            @map("back_file_id")
+  status          VerificationStatus @default(PENDING)
+  verifiedBy      BigInt?            @map("verified_by")
+  verifiedAt      DateTime?          @map("verified_at")
+  rejectReason    String?            @map("reject_reason")
+  isCurrent       Boolean            @default(true) @map("is_current")
+  createdAt       DateTime           @default(now()) @map("created_at")
+
+  customer     Customer     @relation(fields: [customerId], references: [customerId], onDelete: Cascade)
+  licenseClassRef LicenseClass @relation(fields: [licenseClass], references: [code])
+  frontFile    File?        @relation("LicenseFrontFile", fields: [frontFileId], references: [fileId])
+  backFile     File?        @relation("LicenseBackFile", fields: [backFileId], references: [fileId])
+  verifier     User?        @relation("LicenseVerifiedBy", fields: [verifiedBy], references: [userId])
+
+  @@unique([licenseNumber, issuedCountry, licenseClass])
+  @@index([expiryDate], map: "ix_license_expiry")
+  @@map("driver_licenses")
+  @@schema("crm")
+}
+
+model CustomerBlacklist {
+  blacklistId BigInt    @id @default(autoincrement()) @map("blacklist_id")
+  customerId  BigInt    @map("customer_id")
+  reason      String
+  sourceType  String?   @map("source_type")
+  sourceId    BigInt?   @map("source_id")
+  listedAt    DateTime  @default(now()) @map("listed_at")
+  listedBy    BigInt?   @map("listed_by")
+  expiresAt   DateTime? @map("expires_at")
+  liftedAt    DateTime? @map("lifted_at")
+  liftedBy    BigInt?   @map("lifted_by")
+  isActive    Boolean   @default(true) @map("is_active")
+
+  customer Customer @relation(fields: [customerId], references: [customerId], onDelete: Cascade)
+  lister   User?    @relation("BlacklistListedBy", fields: [listedBy], references: [userId])
+  lifter   User?    @relation("BlacklistLiftedBy", fields: [liftedBy], references: [userId])
+
+  @@index([customerId], map: "ix_blacklist_customer")
+  @@map("customer_blacklist")
+  @@schema("crm")
 }

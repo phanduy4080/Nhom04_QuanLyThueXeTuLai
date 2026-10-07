@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   Search,
@@ -10,69 +10,60 @@ import {
   AlertCircle,
   KeyRound,
   UserCheck,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { authService } from '@/services/auth.service';
 
 export default function AdminUsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [usersList, setUsersList] = useState([
-    {
-      id: '1',
-      fullName: 'Trần Văn Quản Trị',
-      email: 'admin@quickhatch.vn',
-      phone: '0900000001',
-      role: 'ADMIN',
-      status: 'ACTIVE',
-      verificationStatus: 'VERIFIED',
-      createdAt: '01/09/2026',
-    },
-    {
-      id: '2',
-      fullName: 'Lê Văn Nhân Viên',
-      email: 'nhanvien@quickhatch.vn',
-      phone: '0900000002',
-      role: 'STAFF',
-      status: 'ACTIVE',
-      verificationStatus: 'VERIFIED',
-      createdAt: '05/09/2026',
-    },
-    {
-      id: '3',
-      fullName: 'Nguyễn Văn Khách Hàng',
-      email: 'khachhang@quickhatch.vn',
-      phone: '0901234567',
-      role: 'CUSTOMER',
-      status: 'ACTIVE',
-      verificationStatus: 'VERIFIED',
-      createdAt: '10/09/2026',
-    },
-    {
-      id: '4',
-      fullName: 'Trần Thị Mai',
-      email: 'maitran@gmail.com',
-      phone: '0918889999',
-      role: 'CUSTOMER',
-      status: 'ACTIVE',
-      verificationStatus: 'PENDING',
-      createdAt: '20/09/2026',
-    },
-  ]);
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await authService.getUsers();
+      if (data) setUsersList(data);
+    } catch (err) {
+      console.error(err);
+      toast.error('Không thể tải danh sách tài khoản');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const handleVerifyCustomer = (id: string, name: string) => {
-    setUsersList((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, verificationStatus: 'VERIFIED' } : u)),
-    );
-    toast.success(`Đã xác thực GPLX & CCCD cho khách hàng ${name}!`);
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleVerifyCustomer = async (id: string, name: string) => {
+    try {
+      await authService.verifyLicense(id);
+      toast.success(`Đã duyệt xác thực GPLX & CCCD cho khách hàng ${name}!`);
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Lỗi khi duyệt xác thực');
+    }
+  };
+
+  const handleToggleRole = async (id: string) => {
+    try {
+      const res = await authService.toggleRole(id);
+      toast.success(res?.message || 'Đã thay đổi vai trò người dùng!');
+      fetchUsers();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Lỗi khi đổi vai trò');
+    }
   };
 
   const filteredUsers = usersList.filter((u) => {
     const matchRole = roleFilter === 'ALL' || u.role === roleFilter;
     const matchSearch =
-      u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.phone.includes(searchTerm);
+      (u.fullName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.phone || '').includes(searchTerm);
     return matchRole && matchSearch;
   });
 

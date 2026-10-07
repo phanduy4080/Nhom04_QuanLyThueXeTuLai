@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { carService } from '@/services/car.service';
+import { bookingService } from '@/services/booking.service';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 
@@ -35,45 +36,84 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const [car, setCar] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Mock booking detail state
-  const [booking, setBooking] = useState({
+  // Booking detail state
+  const [booking, setBooking] = useState<any>({
     code: bookingCode,
-    status: 'CONFIRMED', // CONFIRMED, PENDING, IN_RENTAL, COMPLETED, CANCELLED
-    createdAt: '08/10/2026 00:20',
+    status: 'PENDING',
+    createdAt: new Date().toLocaleDateString('vi-VN'),
     customer: {
-      fullName: 'Nguyễn Văn Khách Hàng',
-      phone: '0901234567',
-      email: 'khachhang@quickhatch.vn',
-      idNumber: '079090001234',
-      licenseNumber: 'GPLX-B2-888999',
+      fullName: 'Khách Hàng',
+      phone: '',
+      email: '',
+      idNumber: '',
+      licenseNumber: '',
     },
     pickup: {
       branchName: 'Chi Nhánh Sân Bay Tân Sơn Nhất',
       address: '45 Trường Sơn, Phường 2, Tân Bình, TP. Hồ Chí Minh',
-      time: '15/10/2026 - 08:00',
+      time: '',
     },
     returnLocation: {
       branchName: 'Chi Nhánh Sân Bay Tân Sơn Nhất',
       address: '45 Trường Sơn, Phường 2, Tân Bình, TP. Hồ Chí Minh',
-      time: '18/10/2026 - 20:00',
+      time: '',
     },
-    totalDays: 3,
-    dailyRate: 1200000,
-    rentalSubtotal: 3600000,
+    totalDays: 1,
+    dailyRate: 0,
+    rentalSubtotal: 0,
     insurancePackageName: 'Gói Tiêu Chuẩn (Miễn Phí)',
     insuranceFee: 0,
-    depositAmount: 10000000,
-    depositPaid: 10000000,
-    totalAmount: 3600000,
+    depositAmount: 0,
+    depositPaid: 0,
+    totalAmount: 0,
     paymentMethod: 'Chuyển Khoản Ngân Hàng (VietQR)',
   });
 
   useEffect(() => {
-    const fetchCarInfo = async () => {
+    const fetchBookingInfo = async () => {
       try {
         setLoading(true);
-        const res = await carService.getCarById('1');
-        if (res.data) setCar(res.data);
+        const res = await bookingService.getBookingByIdOrCode(bookingCode);
+        if (res.data) {
+          const b = res.data;
+          setBooking({
+            id: b.id,
+            code: b.bookingCode,
+            status: b.status,
+            createdAt: b.createdAt ? new Date(b.createdAt).toLocaleString('vi-VN') : '',
+            customer: {
+              fullName: b.customerName,
+              phone: b.phone,
+              email: b.email,
+              idNumber: b.idNumber || '---',
+              licenseNumber: b.licenseNumber || '---',
+            },
+            pickup: {
+              branchName: b.pickupBranch,
+              address: '45 Trường Sơn, Phường 2, Tân Bình, TP. Hồ Chí Minh',
+              time: b.startDate ? new Date(b.startDate).toLocaleString('vi-VN') : '',
+            },
+            returnLocation: {
+              branchName: b.returnBranch,
+              address: '45 Trường Sơn, Phường 2, Tân Bình, TP. Hồ Chí Minh',
+              time: b.endDate ? new Date(b.endDate).toLocaleString('vi-VN') : '',
+            },
+            totalDays: b.totalDays,
+            dailyRate: b.dailyPrice,
+            rentalSubtotal: b.totalAmount,
+            insurancePackageName: 'Gói Bảo Hiểm Toàn Diện 2 Chiều',
+            insuranceFee: b.insuranceFee || 0,
+            depositAmount: b.depositAmount,
+            depositPaid: b.depositAmount,
+            totalAmount: b.totalAmount,
+            paymentMethod: b.paymentMethod === 'BANK_TRANSFER' ? 'Chuyển Khoản Ngân Hàng (VietQR)' : 'Thanh Toán Tại Quầy',
+          });
+
+          if (b.carId) {
+            const carRes = await carService.getCarById(String(b.carId));
+            if (carRes.data) setCar(carRes.data);
+          }
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -81,17 +121,24 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
       }
     };
 
-    fetchCarInfo();
-  }, []);
+    fetchBookingInfo();
+  }, [bookingCode]);
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleCancelBooking = () => {
+  const handleCancelBooking = async () => {
     if (confirm('Bạn có chắc chắn muốn hủy đơn đặt xe này?')) {
-      setBooking((prev) => ({ ...prev, status: 'CANCELLED' }));
-      toast.info('Đã gửi yêu cầu hủy đơn thuê xe');
+      try {
+        if (booking.id) {
+          await bookingService.updateBookingStatus(booking.id, 'CANCELLED', 'Khách hàng yêu cầu hủy đơn');
+        }
+        setBooking((prev: any) => ({ ...prev, status: 'CANCELLED' }));
+        toast.info('Đã gửi yêu cầu hủy đơn thuê xe thành công');
+      } catch (err: any) {
+        toast.error('Lỗi khi hủy đơn');
+      }
     }
   };
 

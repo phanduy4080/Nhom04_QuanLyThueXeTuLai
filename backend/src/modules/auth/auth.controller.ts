@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -45,6 +45,39 @@ export class AuthController {
     return {
       statusCode: HttpStatus.OK,
       message: 'Lấy thông tin tài khoản thành công',
+      data: result,
+    };
+  }
+
+  @Get('users')
+  @ApiOperation({ summary: 'Danh sách người dùng cho Admin IAM' })
+  async findAllUsers() {
+    const result = await this.authService.findAllUsers();
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Lấy danh sách người dùng thành công',
+      data: result,
+    };
+  }
+
+  @Patch('users/:id/role')
+  @ApiOperation({ summary: 'Thay đổi vai trò người dùng (Admin/Staff/Customer)' })
+  async toggleRole(@Param('id') id: string) {
+    const result = await this.authService.toggleUserRole(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Đổi vai trò thành công',
+      data: result,
+    };
+  }
+
+  @Patch('users/:id/verify-license')
+  @ApiOperation({ summary: 'Duyệt xác minh GPLX / CCCD' })
+  async verifyLicense(@Param('id') id: string) {
+    const result = await this.authService.verifyUserLicense(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Duyệt xác minh GPLX thành công',
       data: result,
     };
   }

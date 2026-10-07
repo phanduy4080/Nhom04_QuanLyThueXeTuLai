@@ -97,4 +97,28 @@ export const authService = {
       // Bỏ qua lỗi logout phía server
     }
   },
+
+  /**
+   * Quản trị IAM: Lấy danh sách người dùng
+   */
+  async getUsers(): Promise<any[]> {
+    const res = await apiClient.get<ApiResponse<any[]>>('/auth/users');
+    return res.data.data;
+  },
+
+  /**
+   * Quản trị IAM: Đổi vai trò
+   */
+  async toggleRole(userId: string): Promise<any> {
+    const res = await apiClient.patch(`/auth/users/${userId}/role`);
+    return res.data;
+  },
+
+  /**
+   * Quản trị IAM: Duyệt xác minh GPLX
+   */
+  async verifyLicense(userId: string): Promise<any> {
+    const res = await apiClient.patch(`/auth/users/${userId}/verify-license`);
+    return res.data;
+  },
 };

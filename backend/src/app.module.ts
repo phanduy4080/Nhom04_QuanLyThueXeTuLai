@@ -9,6 +9,8 @@ import { FleetModule } from './modules/fleet/fleet.module';
 import { PricingModule } from './modules/pricing/pricing.module';
 import { OrgModule } from './modules/org/org.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
+import { RentalModule } from './modules/rental/rental.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { UploadModule } from './modules/upload/upload.module';
     PricingModule,
     OrgModule,
     UploadModule,
+    BookingsModule,
+    RentalModule,
   ],
   controllers: [AppController],
   providers: [AppService],

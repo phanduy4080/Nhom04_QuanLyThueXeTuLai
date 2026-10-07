@@ -414,6 +414,8 @@ model Branch {
   vehicles    Vehicle[]
   pricePlans  PricePlan[]
   priceRules  PriceRule[]
+  bookingsPickup Booking[] @relation("BookingPickupBranch")
+  bookingsReturn Booking[] @relation("BookingReturnBranch")
 
   @@index([province], map: "ix_branches_province")
   @@map("branches")
@@ -561,6 +563,8 @@ model Vehicle {
   availabilityBlocks VehicleAvailabilityBlock[]
   pricePlans         PricePlan[]
   vehiclePolicies    VehiclePolicy[]
+  bookings           Booking[]
+  handoverRecords    HandoverRecord[]
 
   @@index([status], map: "ix_vehicles_status")
   @@index([currentBranchId], map: "ix_vehicles_branch")
@@ -1057,3 +1061,62 @@ model CustomerBlacklist {
   @@map("customer_blacklist")
   @@schema("crm")
 }
+
+model Booking {
+  bookingId       Int       @id @default(autoincrement()) @map("booking_id")
+  bookingCode     String    @unique @map("booking_code") @db.VarChar(50)
+  userId          BigInt?   @map("user_id")
+  customerName    String    @map("customer_name") @db.VarChar(255)
+  phone           String    @db.VarChar(50)
+  email           String    @db.VarChar(255)
+  idNumber        String?   @map("id_number") @db.VarChar(50)
+  licenseNumber   String?   @map("license_number") @db.VarChar(50)
+  vehicleId       BigInt    @map("vehicle_id")
+  pickupBranchId  Int       @map("pickup_branch_id")
+  returnBranchId  Int       @map("return_branch_id")
+  startDate       DateTime  @map("start_date") @db.Timestamptz(6)
+  endDate         DateTime  @map("end_date") @db.Timestamptz(6)
+  totalDays       Int       @default(1) @map("total_days")
+  dailyPrice      Decimal   @default(0) @map("daily_price") @db.Decimal(15, 2)
+  totalAmount     Decimal   @default(0) @map("total_amount") @db.Decimal(15, 2)
+  depositAmount   Decimal   @default(0) @map("deposit_amount") @db.Decimal(15, 2)
+  insuranceFee    Decimal   @default(0) @map("insurance_fee") @db.Decimal(15, 2)
+  status          String    @default("PENDING") @db.VarChar(50)
+  paymentMethod   String    @default("BANK_TRANSFER") @map("payment_method") @db.VarChar(50)
+  paymentStatus   String    @default("UNPAID") @map("payment_status") @db.VarChar(50)
+  notes           String?
+  approvedBy      BigInt?   @map("approved_by")
+  approvedAt      DateTime? @map("approved_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  vehicle      Vehicle          @relation(fields: [vehicleId], references: [vehicleId])
+  pickupBranch Branch           @relation("BookingPickupBranch", fields: [pickupBranchId], references: [branchId])
+  returnBranch Branch           @relation("BookingReturnBranch", fields: [returnBranchId], references: [branchId])
+  handovers    HandoverRecord[]
+
+  @@map("bookings")
+  @@schema("booking")
+}
+
+model HandoverRecord {
+  handoverId   Int      @id @default(autoincrement()) @map("handover_id")
+  handoverCode String   @unique @map("handover_code") @db.VarChar(50)
+  bookingId    Int      @map("booking_id")
+  vehicleId    BigInt   @map("vehicle_id")
+  staffId      BigInt?  @map("staff_id")
+  type         String   @default("CHECKOUT") @db.VarChar(20)
+  odoMeter     Int      @default(0) @map("odo_meter")
+  fuelLevel    String   @default("100%") @map("fuel_level") @db.VarChar(50)
+  carCondition String?  @map("car_condition")
+  status       String   @default("COMPLETED") @db.VarChar(50)
+  signedAt     DateTime @default(now()) @map("signed_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  booking Booking @relation(fields: [bookingId], references: [bookingId], onDelete: Cascade)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId])
+
+  @@map("handover_records")
+  @@schema("rental")
+}
+

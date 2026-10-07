@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   KeyRound,
   CheckCircle2,
@@ -13,36 +13,28 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
+import { rentalService } from '@/services/rental.service';
 
 export default function AdminHandoverPage() {
   const [activeTab, setActiveTab] = useState<'pickup' | 'return'>('pickup');
+  const [handoverRecords, setHandoverRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [handoverRecords, setHandoverRecords] = useState([
-    {
-      id: 'BG-2610-001',
-      bookingCode: 'DH-2610-000042',
-      customerName: 'Nguyễn Văn Khách Hàng',
-      carName: 'VinFast VF 8 Plus (51K-888.88)',
-      type: 'PICKUP',
-      time: '15/10/2026 08:30',
-      odo: 12500,
-      fuel: '98% Pin',
-      status: 'COMPLETED',
-      staff: 'Trần Văn Quản Trị',
-    },
-    {
-      id: 'BG-2610-002',
-      bookingCode: 'DH-2610-000040',
-      customerName: 'Lê Hoàng Long',
-      carName: 'Toyota Vios 1.5G (51F-123.45)',
-      type: 'RETURN',
-      time: '15/10/2026 19:45',
-      odo: 45320,
-      fuel: '8/8 Vạch Xăng',
-      status: 'COMPLETED',
-      staff: 'Trần Văn Quản Trị',
-    },
-  ]);
+  useEffect(() => {
+    const fetchHandovers = async () => {
+      try {
+        setLoading(true);
+        const res = await rentalService.getHandovers();
+        if (res.data) setHandoverRecords(res.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHandovers();
+  }, []);
 
   return (
     <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-6">

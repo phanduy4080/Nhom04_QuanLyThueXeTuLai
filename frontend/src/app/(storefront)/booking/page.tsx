@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { carService } from '@/services/car.service';
 import { pricingService, PriceCalculationResult } from '@/services/pricing.service';
+import { bookingService } from '@/services/booking.service';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -56,6 +57,14 @@ function BookingContent() {
   const [note, setNote] = useState('');
 
   useEffect(() => {
+    if (user) {
+      if (user.fullName) setFullName(user.fullName);
+      if (user.email) setEmail(user.email);
+      if (user.phone) setPhone(user.phone);
+    }
+  }, [user]);
+
+  useEffect(() => {
     const fetchBookingData = async () => {
       try {
         setLoading(true);
@@ -70,7 +79,15 @@ function BookingContent() {
           }),
         ]);
 
-        if (carRes.data) setCar(carRes.data);
+        if (carRes.data) {
+          setCar(carRes.data);
+          const carObj = carRes.data as any;
+          if (carObj.currentBranchId) {
+            setPickupBranchId(carObj.currentBranchId);
+          } else if (carObj.branchId) {
+            setPickupBranchId(carObj.branchId);
+          }
+        }
         if (branchesRes.data) setBranches(branchesRes.data);
         if (quoteRes.data) setQuote(quoteRes.data);
       } catch (err) {
@@ -92,12 +109,27 @@ function BookingContent() {
 
     try {
       setSubmitting(true);
-      // Tạo mã đơn đặt xe mẫu
-      const generatedCode = `DH-${Date.now().toString().slice(-6)}`;
+      const res = await bookingService.createBooking({
+        vehicleId: Number(carId),
+        startDate: new Date(startDateParam).toISOString(),
+        endDate: new Date(endDateParam).toISOString(),
+        customerName: fullName,
+        phone,
+        email,
+        idNumber,
+        licenseNumber,
+        pickupBranchId: Number(pickupBranchId),
+        returnBranchId: Number(pickupBranchId),
+        paymentMethod,
+        notes: note,
+      });
+
+      const newBooking = res.data;
       toast.success('Đặt xe thành công! Đang chuyển đến chi tiết đơn hàng...');
-      router.push(`/booking/${generatedCode}?carId=${carId}&start=${startDateParam}&end=${endDateParam}`);
-    } catch (err) {
-      toast.error('Có lỗi xảy ra khi tạo đơn đặt xe');
+      router.push(`/booking/${newBooking.bookingCode}?carId=${carId}&start=${startDateParam}&end=${endDateParam}`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi tạo đơn đặt xe');
     } finally {
       setSubmitting(false);
     }

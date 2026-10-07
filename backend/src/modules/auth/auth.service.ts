@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -167,6 +167,97 @@ export class AuthService {
       customer: user.customer,
       createdAt: user.createdAt,
     };
+  }
+
+  async findAllUsers() {
+    const users = await this.prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        userRoles: { include: { role: true } },
+        staff: true,
+        customer: {
+          include: {
+            driverLicenses: true,
+            identityDocuments: true,
+          },
+        },
+      },
+    });
+
+    return users.map((u) => {
+      const roles = u.userRoles.map((ur) => ur.role.code);
+      const role = roles.includes('ADMIN') ? 'ADMIN' : roles.includes('STAFF') ? 'STAFF' : 'CUSTOMER';
+      const fullName = u.staff?.fullName || u.customer?.fullName || u.email || 'Người dùng';
+      
+      let verificationStatus = 'PENDING';
+      if (u.customer?.driverLicenses && u.customer.driverLicenses.length > 0) {
+        verificationStatus = u.customer.driverLicenses[0].status;
+      }
+
+      return {
+        id: u.publicId,
+        fullName,
+        email: u.email,
+        phone: u.phone || 'Chưa cập nhật',
+        role,
+        roles,
+        verificationStatus: verificationStatus === 'VERIFIED' ? 'VERIFIED' : 'PENDING',
+        status: u.status,
+        createdAt: u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '',
+      };
+    });
+  }
+
+  async toggleUserRole(publicId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { publicId },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+
+    const currentRole = user.userRoles[0]?.role?.code || 'CUSTOMER';
+    const nextRoleCode = currentRole === 'CUSTOMER' ? 'STAFF' : currentRole === 'STAFF' ? 'ADMIN' : 'CUSTOMER';
+
+    const targetRole = await this.prisma.role.findFirst({ where: { code: nextRoleCode } });
+    if (targetRole) {
+      await this.prisma.userRole.deleteMany({ where: { userId: user.userId } });
+      await this.prisma.userRole.create({
+        data: {
+          userId: user.userId,
+          roleId: targetRole.roleId,
+        },
+      });
+    }
+
+    return { message: `Đã đổi vai trò sang ${nextRoleCode}` };
+  }
+
+  async verifyUserLicense(publicId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { publicId },
+      include: { customer: { include: { driverLicenses: true } } },
+    });
+    if (!user || !user.customer) throw new NotFoundException('Không tìm thấy hồ sơ khách hàng');
+
+    if (user.customer.driverLicenses.length > 0) {
+      await this.prisma.driverLicense.updateMany({
+        where: { customerId: user.customer.customerId },
+        data: { status: 'VERIFIED', verifiedAt: new Date() },
+      });
+    } else {
+      await this.prisma.driverLicense.create({
+        data: {
+          customerId: user.customer.customerId,
+          licenseNumber: 'GPLX-VERIFIED',
+          licenseClass: 'B2',
+          issueDate: new Date('2022-01-01'),
+          status: 'VERIFIED',
+          verifiedAt: new Date(),
+        },
+      });
+    }
+
+    return { message: 'Xác thực GPLX thành công' };
   }
 
   private generateToken(publicId: string, email: string, roles: string[]) {

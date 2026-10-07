@@ -5,3 +5,4 @@
 \i 00_init.sql
 \i 01a_schema_master.sql
 \i 02_seed_initial_data.sql
+\i 03_booking_rental_schema.sql

@@ -1,10 +1,24 @@
+import React, { Suspense } from 'react';
+import type { Metadata } from 'next';
+import RegisterForm from '@/components/auth/RegisterForm';
+import { Loader2 } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Đăng Ký Tài Khoản | QuickHatch - Thuê Xe Tự Lái',
+  description: 'Đăng ký tài khoản QuickHatch để thuê xe tự lái đời mới, giao tận nơi nhanh chóng, giá tốt.',
+};
+
 export default function RegisterPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-lg border border-slate-100">
-        <h1 className="text-2xl font-bold text-slate-900 text-center mb-2">Đăng Ký Tài Khoản</h1>
-        <p className="text-sm text-slate-500 text-center mb-6">Trải nghiệm dịch vụ thuê xe tự lái nhanh chóng</p>
-      </div>
-    </div>
+    <Suspense
+      fallback={
+        <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
+          <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+          <p className="text-sm font-medium">Đang tải form đăng ký...</p>
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

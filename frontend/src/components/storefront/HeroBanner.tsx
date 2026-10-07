@@ -25,11 +25,7 @@ export default function HeroBanner() {
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight">
             Welcome to QuickHatch – Your Ticket to Thrilling Rides!
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 leading-relaxed max-w-2xl mx-auto">
-            With QuickHatch, you&apos;re not just renting a car – you&apos;re unlocking a world of speed,
-            style, and excitement. Whether you&apos;re zipping through city streets or conquering
-            winding country roads, our fleet of top-notch hot-hatches is at your service.
-          </p>
+          
         </div>
 
         {/* Hero Panorama Car Image with Overlaid Search Bar */}
@@ -66,52 +62,54 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        {/* Brand Logos Monochromatic Row */}
-        <div className="mt-14 max-w-5xl mx-auto flex flex-wrap items-center justify-around gap-8 py-6 opacity-65 grayscale hover:grayscale-0 transition-all">
-          {/* Mercedes */}
-          <div className="text-center font-bold text-gray-800 text-sm tracking-widest flex flex-col items-center">
-            <span className="w-10 h-10 rounded-full border-2 border-gray-700 flex items-center justify-center text-xs font-black mb-1">
-              ★
+        {/* Brand Logos Row */}
+        <div className="mt-14 max-w-5xl mx-auto flex flex-wrap items-center justify-around gap-8 py-6 opacity-60 hover:opacity-100 transition-opacity">
+          {/* VinFast */}
+          <div className="text-center flex flex-col items-center">
+            <span className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
+              VF
             </span>
-            <span className="text-[11px] uppercase tracking-wider text-gray-600">Mercedes-Benz</span>
-          </div>
-
-          {/* Honda */}
-          <div className="text-center font-bold text-gray-800 text-sm tracking-widest flex flex-col items-center">
-            <span className="w-10 h-10 rounded-lg border-2 border-gray-700 flex items-center justify-center text-base font-black mb-1">
-              H
-            </span>
-            <span className="text-[11px] uppercase tracking-wider text-gray-600">HONDA</span>
-          </div>
-
-          {/* Audi */}
-          <div className="text-center font-bold text-gray-800 text-sm tracking-widest flex flex-col items-center">
-            <span className="text-xl font-black text-gray-800 tracking-tighter mb-1">
-              ○○○○
-            </span>
-            <span className="text-[11px] uppercase tracking-wider text-gray-600">Audi</span>
-          </div>
-
-          {/* Renault */}
-          <div className="text-center font-bold text-gray-800 text-sm tracking-widest flex flex-col items-center">
-            <span className="w-8 h-8 rotate-45 border-2 border-gray-700 inline-block mb-2"></span>
-            <span className="text-[11px] uppercase tracking-wider text-gray-600">Renault</span>
-          </div>
-
-          {/* BMW */}
-          <div className="text-center font-bold text-gray-800 text-sm tracking-widest flex flex-col items-center">
-            <span className="w-10 h-10 rounded-full border-2 border-gray-700 flex items-center justify-center text-xs font-black mb-1">
-              BMW
-            </span>
-            <span className="text-[11px] uppercase tracking-wider text-gray-600">BMW</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">VinFast</span>
           </div>
 
           {/* Toyota */}
-          <div className="text-center font-bold text-gray-800 text-sm tracking-widest flex flex-col items-center">
-            <span className="w-11 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center text-xs font-black mb-1">
-              ⊚
+          <div className="text-center flex flex-col items-center">
+            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
+              TOY
             </span>
-            <span className="text-[11px] uppercase tracking-wider text-gray-600">TOYOTA</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Toyota</span>
+          </div>
+
+          {/* Mazda */}
+          <div className="text-center flex flex-col items-center">
+            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
+              MZD
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Mazda</span>
+          </div>
+
+          {/* Hyundai */}
+          <div className="text-center flex flex-col items-center">
+            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
+              HYU
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Hyundai</span>
+          </div>
+
+          {/* Mercedes */}
+          <div className="text-center flex flex-col items-center">
+            <span className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
+              MB
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Mercedes</span>
+          </div>
+
+          {/* BMW */}
+          <div className="text-center flex flex-col items-center">
+            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
+              BMW
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">BMW</span>
           </div>
         </div>
       </div>

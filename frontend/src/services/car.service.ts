@@ -1,52 +1,83 @@
 import { apiClient } from '@/lib/api/axios';
 import { ApiResponse, Car, CarFilterParams } from '@/types';
 
+export interface VehicleStatusUpdatePayload {
+  status: string;
+  reason?: string;
+}
+
 export const carService = {
   /**
-   * Lấy danh sách xe với bộ lọc và phân trang
+   * US-04: Lấy danh sách xe với bộ lọc và phân trang
    */
   async getCars(params?: CarFilterParams): Promise<ApiResponse<Car[]>> {
-    const response = await apiClient.get<ApiResponse<Car[]>>('/cars', { params });
+    const response = await apiClient.get<ApiResponse<Car[]>>('/fleet/vehicles', { params });
     return response.data;
   },
 
   /**
-   * Lấy chi tiết xe theo slug hoặc id
+   * US-06: Lấy chi tiết xe theo ID
    */
-  async getCarBySlug(slug: string): Promise<ApiResponse<Car>> {
-    const response = await apiClient.get<ApiResponse<Car>>(`/cars/${slug}`);
+  async getCarById(id: string): Promise<ApiResponse<Car>> {
+    const response = await apiClient.get<ApiResponse<Car>>(`/fleet/vehicles/${id}`);
     return response.data;
   },
 
   /**
-   * Lấy danh sách xe nổi bật trang chủ
+   * US-05: Kiểm tra tính sẵn sàng của xe theo khoảng thời gian
    */
-  async getFeaturedCars(): Promise<ApiResponse<Car[]>> {
-    const response = await apiClient.get<ApiResponse<Car[]>>('/cars/featured');
+  async checkAvailability(id: string, startDate: string, endDate: string) {
+    const response = await apiClient.get<ApiResponse<{ isAvailable: boolean; message: string }>>(
+      `/fleet/vehicles/${id}/availability`,
+      { params: { startDate, endDate } },
+    );
     return response.data;
   },
 
   /**
-   * Admin: Tạo xe mới
+   * US-01 (Admin/Staff): Tạo xe mới
    */
-  async createCar(data: Partial<Car>): Promise<ApiResponse<Car>> {
-    const response = await apiClient.post<ApiResponse<Car>>('/cars', data);
+  async createCar(data: Record<string, unknown>): Promise<ApiResponse<Car>> {
+    const response = await apiClient.post<ApiResponse<Car>>('/fleet/vehicles', data);
     return response.data;
   },
 
   /**
-   * Admin: Cập nhật thông tin xe
+   * US-01 (Admin/Staff): Cập nhật thông tin xe
    */
-  async updateCar(id: string, data: Partial<Car>): Promise<ApiResponse<Car>> {
-    const response = await apiClient.patch<ApiResponse<Car>>(`/cars/${id}`, data);
+  async updateCar(id: string, data: Record<string, unknown>): Promise<ApiResponse<Car>> {
+    const response = await apiClient.put<ApiResponse<Car>>(`/fleet/vehicles/${id}`, data);
     return response.data;
   },
 
   /**
-   * Admin: Xóa xe
+   * US-02 (Admin/Staff): Cập nhật trạng thái xe & lịch sử
    */
-  async deleteCar(id: string): Promise<ApiResponse<void>> {
-    const response = await apiClient.delete<ApiResponse<void>>(`/cars/${id}`);
+  async updateCarStatus(id: string, payload: VehicleStatusUpdatePayload): Promise<ApiResponse<Car>> {
+    const response = await apiClient.patch<ApiResponse<Car>>(`/fleet/vehicles/${id}/status`, payload);
+    return response.data;
+  },
+
+  /**
+   * Lấy danh mục, hãng và dòng xe
+   */
+  async getCategories() {
+    const response = await apiClient.get('/fleet/categories');
+    return response.data;
+  },
+
+  async getBrands() {
+    const response = await apiClient.get('/fleet/brands');
+    return response.data;
+  },
+
+  async getModels(brandId?: number, categoryId?: number) {
+    const response = await apiClient.get('/fleet/models', { params: { brandId, categoryId } });
+    return response.data;
+  },
+
+  async getBranches() {
+    const response = await apiClient.get('/org/branches');
     return response.data;
   },
 };

@@ -16,8 +16,13 @@ export default function CarCard({ car }: CarCardProps) {
   const shortCategory = categoryName.split('/')[0].trim();
   const imageCount = car.images?.length || 0;
 
+  const carHref = `/cars/${car.id || car.slug || '1'}`;
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col justify-between group">
+    <Link
+      href={carHref}
+      className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col justify-between group cursor-pointer block"
+    >
       <div>
         {/* Car Image Container */}
         <div className="relative h-44 sm:h-48 bg-slate-100 flex items-center justify-center overflow-hidden">
@@ -105,14 +110,13 @@ export default function CarCard({ car }: CarCardProps) {
           </div>
         </div>
 
-        <Link
-          href={`/cars/${car.id || car.slug || '1'}`}
-          className="inline-flex items-center gap-1 bg-amber-400 hover:bg-amber-500 text-gray-950 text-xs font-bold py-2 px-3.5 rounded-xl shadow-2xs transition-all cursor-pointer"
+        <span
+          className="inline-flex items-center gap-1 bg-amber-400 group-hover:bg-amber-500 text-gray-950 text-xs font-bold py-2 px-3.5 rounded-xl shadow-2xs transition-all"
         >
           <span>Chi tiết</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </Link>
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }

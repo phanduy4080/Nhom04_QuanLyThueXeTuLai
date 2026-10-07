@@ -265,31 +265,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Value props */}
-          <div className="bg-slate-900 text-white p-6 rounded-3xl space-y-3">
-            <h3 className="font-black text-amber-400 text-sm uppercase tracking-wider flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Cam Kết Chất Lượng Dịch Vụ</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Giao xe đúng giờ 100%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Khử khuẩn & kiểm định 28 hạng mục</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Hoàn cọc siêu tốc 15 phút</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Cứu hộ giao thông 24/7 toàn quốc</span>
-              </div>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

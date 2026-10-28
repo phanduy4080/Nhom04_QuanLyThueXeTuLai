@@ -82,3 +82,4 @@ export class VerifyDocumentsDto {
   @IsString()
   additionalDriverLicenseBack?: string;
 }
+

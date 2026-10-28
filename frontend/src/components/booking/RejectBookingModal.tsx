@@ -142,3 +142,4 @@ export const RejectBookingModal: React.FC<RejectBookingModalProps> = ({
     </div>
   );
 };
+

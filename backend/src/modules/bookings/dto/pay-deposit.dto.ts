@@ -17,3 +17,4 @@ export class PayDepositDto {
   @IsString()
   notes?: string;
 }
+

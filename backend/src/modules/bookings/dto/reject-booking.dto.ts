@@ -9,3 +9,4 @@ export class RejectBookingDto {
   @IsString()
   notes?: string;
 }
+

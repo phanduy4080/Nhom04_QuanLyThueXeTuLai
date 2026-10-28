@@ -33,11 +33,26 @@ import { uploadService } from '@/services/upload.service';
 import { formatCurrency } from '@/lib/utils';
 import { Car } from '@/types';
 
+const DEFAULT_FALLBACK_MODELS = [
+  { modelId: 1, name: 'VinFast VF 8', variant: 'Plus (2024)', seats: 5, fuelType: 'ELECTRIC', transmission: 'AUTOMATIC', brand: { name: 'VinFast' } },
+  { modelId: 2, name: 'VinFast VF 3', variant: 'Tiêu chuẩn (2024)', seats: 4, fuelType: 'ELECTRIC', transmission: 'AUTOMATIC', brand: { name: 'VinFast' } },
+  { modelId: 3, name: 'Toyota Vios', variant: '1.5G (2024)', seats: 5, fuelType: 'GASOLINE', transmission: 'AUTOMATIC', brand: { name: 'Toyota' } },
+  { modelId: 4, name: 'Mazda CX-5', variant: '2.0 Premium (2024)', seats: 5, fuelType: 'GASOLINE', transmission: 'AUTOMATIC', brand: { name: 'Mazda' } },
+  { modelId: 5, name: 'Hyundai SantaFe', variant: '2.5 Xăng Cao Cấp (2024)', seats: 7, fuelType: 'GASOLINE', transmission: 'AUTOMATIC', brand: { name: 'Hyundai' } },
+  { modelId: 6, name: 'Mitsubishi Xpander', variant: 'AT Premium (2024)', seats: 7, fuelType: 'GASOLINE', transmission: 'AUTOMATIC', brand: { name: 'Mitsubishi' } },
+];
+
+const DEFAULT_FALLBACK_BRANCHES = [
+  { branchId: 1, name: 'Chi Nhánh Sân Bay Tân Sơn Nhất', province: 'TP. Hồ Chí Minh' },
+  { branchId: 2, name: 'Chi Nhánh Quận 1 - Trung Tâm', province: 'TP. Hồ Chí Minh' },
+  { branchId: 3, name: 'Chi Nhánh Sân Bay Nội Bài', province: 'Hà Nội' },
+];
+
 export default function AdminCarsPage() {
   const [activeTab, setActiveTab] = useState<'fleet' | 'pricing'>('fleet');
   const [cars, setCars] = useState<Car[]>([]);
-  const [branches, setBranches] = useState<any[]>([]);
-  const [models, setModels] = useState<any[]>([]);
+  const [branches, setBranches] = useState<any[]>(DEFAULT_FALLBACK_BRANCHES);
+  const [models, setModels] = useState<any[]>(DEFAULT_FALLBACK_MODELS);
   const [categories, setCategories] = useState<any[]>([]);
   const [pricePlans, setPricePlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -101,18 +116,30 @@ export default function AdminCarsPage() {
 
   const fetchMetadata = async () => {
     try {
-      const [branchesRes, modelsRes, categoriesRes, plansRes] = await Promise.all([
-        carService.getBranches(),
-        carService.getModels(),
+      const [branchesRes, modelsRes, categoriesRes, plansRes] = await Promise.allSettled([
+        carService.getBranches({ includeInactive: false }),
+        carService.getModels({ includeInactive: false }),
         carService.getCategories(),
         pricingService.getPricePlans(),
       ]);
-      if (branchesRes.data) setBranches(branchesRes.data);
-      if (modelsRes.data) setModels(modelsRes.data);
-      if (categoriesRes.data) setCategories(categoriesRes.data);
-      if (plansRes.data) setPricePlans(plansRes.data);
+
+      if (branchesRes.status === 'fulfilled' && branchesRes.value?.data && Array.isArray(branchesRes.value.data) && branchesRes.value.data.length > 0) {
+        setBranches(branchesRes.value.data);
+      }
+
+      if (modelsRes.status === 'fulfilled' && modelsRes.value?.data && Array.isArray(modelsRes.value.data) && modelsRes.value.data.length > 0) {
+        setModels(modelsRes.value.data);
+      }
+
+      if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.data) {
+        setCategories(categoriesRes.value.data);
+      }
+
+      if (plansRes.status === 'fulfilled' && plansRes.value?.data) {
+        setPricePlans(plansRes.value.data);
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Lỗi khi tải metadata chi nhánh & dòng xe:', err);
     }
   };
 
@@ -171,33 +198,40 @@ export default function AdminCarsPage() {
   const handleOpenAddModal = () => {
     setSelectedCar(null);
     setNewImageUrl('');
+    const firstModel = models[0] || DEFAULT_FALLBACK_MODELS[0];
+    const firstBranch = branches[0] || DEFAULT_FALLBACK_BRANCHES[0];
+
     setFormData({
       licensePlate: '',
       assetCode: '',
-      modelId: models[0]?.modelId || 1,
+      modelId: firstModel.modelId,
       manufactureYear: 2024,
       color: 'Trắng',
-      seats: 5,
-      transmission: 'AUTOMATIC',
-      fuelType: 'GASOLINE',
+      seats: firstModel.seats || 5,
+      transmission: (firstModel.transmission as any) || 'AUTOMATIC',
+      fuelType: (firstModel.fuelType as any) || 'GASOLINE',
       listPricePerDay: 800000,
       depositAmount: 8000000,
       dailyKmLimit: 350,
       extraKmFee: 5000,
-      currentBranchId: branches[0]?.branchId || 1,
+      currentBranchId: firstBranch.branchId,
       notes: '',
       images: [],
     });
     setShowAddModal(true);
+    fetchMetadata();
   };
 
   const handleOpenEditModal = (car: any) => {
     setSelectedCar(car);
     setNewImageUrl('');
+    const firstModel = models[0] || DEFAULT_FALLBACK_MODELS[0];
+    const firstBranch = branches[0] || DEFAULT_FALLBACK_BRANCHES[0];
+
     setFormData({
       licensePlate: car.licensePlate,
       assetCode: car.assetCode || '',
-      modelId: car.modelId || models[0]?.modelId || 1,
+      modelId: car.modelId || firstModel.modelId,
       manufactureYear: car.modelYear || 2024,
       color: car.color || 'Trắng',
       seats: car.seats || 5,
@@ -207,11 +241,12 @@ export default function AdminCarsPage() {
       depositAmount: car.depositAmount || 8000000,
       dailyKmLimit: car.dailyKmLimit || 350,
       extraKmFee: car.extraKmFee || 5000,
-      currentBranchId: car.currentBranchId || branches[0]?.branchId || 1,
+      currentBranchId: car.currentBranchId || car.branchId || firstBranch.branchId,
       notes: car.notes || '',
       images: car.images && car.images.length > 0 ? car.images : car.thumbnail ? [car.thumbnail] : [],
     });
     setShowEditModal(true);
+    fetchMetadata();
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -273,12 +308,27 @@ export default function AdminCarsPage() {
     e.preventDefault();
     try {
       setLoading(true);
+      const finalModelId = Number(formData.modelId) || models[0]?.modelId || DEFAULT_FALLBACK_MODELS[0].modelId;
+      const finalBranchId = Number(formData.currentBranchId) || branches[0]?.branchId || DEFAULT_FALLBACK_BRANCHES[0].branchId;
+
+      const payload = {
+        ...formData,
+        modelId: finalModelId,
+        currentBranchId: finalBranchId,
+        manufactureYear: Number(formData.manufactureYear),
+        seats: Number(formData.seats),
+        listPricePerDay: Number(formData.listPricePerDay),
+        depositAmount: Number(formData.depositAmount),
+        dailyKmLimit: formData.dailyKmLimit ? Number(formData.dailyKmLimit) : undefined,
+        extraKmFee: formData.extraKmFee ? Number(formData.extraKmFee) : undefined,
+      };
+
       if (showEditModal && selectedCar) {
-        await carService.updateCar(selectedCar.id, formData);
+        await carService.updateCar(selectedCar.id, payload);
         toast.success('Cập nhật thông tin xe thành công!');
         setShowEditModal(false);
       } else {
-        await carService.createCar(formData);
+        await carService.createCar(payload);
         toast.success('Thêm xe mới vào đội xe thành công!');
         setShowAddModal(false);
       }
@@ -471,7 +521,7 @@ export default function AdminCarsPage() {
                 className="w-full h-11 px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400"
               >
                 <option value="ALL">Tất cả chi nhánh</option>
-                {branches.map((b) => (
+                {(branches.length > 0 ? branches : DEFAULT_FALLBACK_BRANCHES).map((b) => (
                   <option key={b.branchId} value={b.branchId}>
                     {b.name}
                   </option>
@@ -805,12 +855,23 @@ export default function AdminCarsPage() {
                     </div>
                     <select
                       value={formData.modelId}
-                      onChange={(e) => setFormData({ ...formData, modelId: Number(e.target.value) })}
-                      className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800"
+                      onChange={(e) => {
+                        const selectedId = Number(e.target.value);
+                        const allModels = models.length > 0 ? models : DEFAULT_FALLBACK_MODELS;
+                        const chosen = allModels.find((m) => m.modelId === selectedId);
+                        setFormData((prev) => ({
+                          ...prev,
+                          modelId: selectedId,
+                          seats: chosen?.seats || prev.seats,
+                          transmission: (chosen?.transmission as any) || prev.transmission,
+                          fuelType: (chosen?.fuelType as any) || prev.fuelType,
+                        }));
+                      }}
+                      className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800 cursor-pointer"
                     >
-                      {models.map((m) => (
+                      {(models.length > 0 ? models : DEFAULT_FALLBACK_MODELS).map((m) => (
                         <option key={m.modelId} value={m.modelId}>
-                          {m.brand?.name} {m.name} ({m.variant || 'Tiêu chuẩn'})
+                          {m.brand?.name ? `${m.brand.name} ` : ''}{m.name} ({m.variant || 'Tiêu chuẩn'})
                         </option>
                       ))}
                     </select>
@@ -844,11 +905,11 @@ export default function AdminCarsPage() {
                     <select
                       value={formData.currentBranchId}
                       onChange={(e) => setFormData({ ...formData, currentBranchId: Number(e.target.value) })}
-                      className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800"
+                      className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800 cursor-pointer"
                     >
-                      {branches.map((b) => (
+                      {(branches.length > 0 ? branches : DEFAULT_FALLBACK_BRANCHES).map((b) => (
                         <option key={b.branchId} value={b.branchId}>
-                          {b.name}
+                          {b.name} {b.province ? `(${b.province})` : ''}
                         </option>
                       ))}
                     </select>

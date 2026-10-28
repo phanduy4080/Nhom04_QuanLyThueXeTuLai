@@ -123,12 +123,17 @@ export default function AdminCarsPage() {
         pricingService.getPricePlans(),
       ]);
 
+      let fetchedBranches: any[] = DEFAULT_FALLBACK_BRANCHES;
+      let fetchedModels: any[] = DEFAULT_FALLBACK_MODELS;
+
       if (branchesRes.status === 'fulfilled' && branchesRes.value?.data && Array.isArray(branchesRes.value.data) && branchesRes.value.data.length > 0) {
-        setBranches(branchesRes.value.data);
+        fetchedBranches = branchesRes.value.data;
+        setBranches(fetchedBranches);
       }
 
       if (modelsRes.status === 'fulfilled' && modelsRes.value?.data && Array.isArray(modelsRes.value.data) && modelsRes.value.data.length > 0) {
-        setModels(modelsRes.value.data);
+        fetchedModels = modelsRes.value.data;
+        setModels(fetchedModels);
       }
 
       if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.data) {
@@ -138,6 +143,24 @@ export default function AdminCarsPage() {
       if (plansRes.status === 'fulfilled' && plansRes.value?.data) {
         setPricePlans(plansRes.value.data);
       }
+
+      // Tự động đồng bộ formData nếu modelId hoặc currentBranchId chưa khớp danh sách tải về
+      setFormData((prev) => {
+        const hasValidModel = fetchedModels.some((m) => m.modelId === prev.modelId);
+        const hasValidBranch = fetchedBranches.some((b) => b.branchId === prev.currentBranchId);
+        const chosenModel = hasValidModel
+          ? fetchedModels.find((m) => m.modelId === prev.modelId)
+          : fetchedModels[0];
+
+        return {
+          ...prev,
+          modelId: hasValidModel ? prev.modelId : (fetchedModels[0]?.modelId || 1),
+          currentBranchId: hasValidBranch ? prev.currentBranchId : (fetchedBranches[0]?.branchId || 1),
+          seats: chosenModel?.seats || prev.seats,
+          transmission: (chosenModel?.transmission as any) || prev.transmission,
+          fuelType: (chosenModel?.fuelType as any) || prev.fuelType,
+        };
+      });
     } catch (err) {
       console.error('Lỗi khi tải metadata chi nhánh & dòng xe:', err);
     }
@@ -306,22 +329,48 @@ export default function AdminCarsPage() {
 
   const handleSaveCar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.licensePlate.trim()) {
+      toast.error('Vui lòng nhập biển số xe');
+      return;
+    }
+
+    const activeModels = models.length > 0 ? models : DEFAULT_FALLBACK_MODELS;
+    const activeBranches = branches.length > 0 ? branches : DEFAULT_FALLBACK_BRANCHES;
+
+    const finalModelId = Number(formData.modelId) || activeModels[0]?.modelId;
+    const finalBranchId = Number(formData.currentBranchId) || activeBranches[0]?.branchId;
+
+    if (!finalModelId) {
+      toast.error('Vui lòng chọn dòng xe hợp lệ');
+      return;
+    }
+    if (!finalBranchId) {
+      toast.error('Vui lòng chọn chi nhánh trạm xe hợp lệ');
+      return;
+    }
+
     try {
       setLoading(true);
-      const finalModelId = Number(formData.modelId) || models[0]?.modelId || DEFAULT_FALLBACK_MODELS[0].modelId;
-      const finalBranchId = Number(formData.currentBranchId) || branches[0]?.branchId || DEFAULT_FALLBACK_BRANCHES[0].branchId;
-
-      const payload = {
-        ...formData,
+      const payload: Record<string, any> = {
+        licensePlate: formData.licensePlate.trim().toUpperCase(),
         modelId: finalModelId,
         currentBranchId: finalBranchId,
         manufactureYear: Number(formData.manufactureYear),
+        color: formData.color,
         seats: Number(formData.seats),
+        transmission: formData.transmission,
+        fuelType: formData.fuelType,
         listPricePerDay: Number(formData.listPricePerDay),
         depositAmount: Number(formData.depositAmount),
         dailyKmLimit: formData.dailyKmLimit ? Number(formData.dailyKmLimit) : undefined,
         extraKmFee: formData.extraKmFee ? Number(formData.extraKmFee) : undefined,
+        notes: formData.notes?.trim() || undefined,
+        images: formData.images,
       };
+
+      if (formData.assetCode && formData.assetCode.trim()) {
+        payload.assetCode = formData.assetCode.trim();
+      }
 
       if (showEditModal && selectedCar) {
         await carService.updateCar(selectedCar.id, payload);
@@ -334,7 +383,8 @@ export default function AdminCarsPage() {
       }
       fetchCars();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Có lỗi xảy ra');
+      const msg = err.response?.data?.message || err.message || 'Có lỗi xảy ra khi lưu xe';
+      toast.error(Array.isArray(msg) ? msg.join(', ') : msg);
     } finally {
       setLoading(false);
     }
@@ -869,6 +919,11 @@ export default function AdminCarsPage() {
                       }}
                       className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800 cursor-pointer"
                     >
+                      {!(models.length > 0 ? models : DEFAULT_FALLBACK_MODELS).some((m) => m.modelId === formData.modelId) && (
+                        <option value={formData.modelId} disabled>
+                          -- Chọn dòng xe --
+                        </option>
+                      )}
                       {(models.length > 0 ? models : DEFAULT_FALLBACK_MODELS).map((m) => (
                         <option key={m.modelId} value={m.modelId}>
                           {m.brand?.name ? `${m.brand.name} ` : ''}{m.name} ({m.variant || 'Tiêu chuẩn'})
@@ -907,6 +962,11 @@ export default function AdminCarsPage() {
                       onChange={(e) => setFormData({ ...formData, currentBranchId: Number(e.target.value) })}
                       className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800 cursor-pointer"
                     >
+                      {!(branches.length > 0 ? branches : DEFAULT_FALLBACK_BRANCHES).some((b) => b.branchId === formData.currentBranchId) && (
+                        <option value={formData.currentBranchId} disabled>
+                          -- Chọn chi nhánh --
+                        </option>
+                      )}
                       {(branches.length > 0 ? branches : DEFAULT_FALLBACK_BRANCHES).map((b) => (
                         <option key={b.branchId} value={b.branchId}>
                           {b.name} {b.province ? `(${b.province})` : ''}

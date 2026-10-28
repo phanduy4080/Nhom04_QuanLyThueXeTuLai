@@ -18,13 +18,17 @@ import {
   FileText,
   AlertCircle,
   ExternalLink,
+  KeyRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/utils';
 import { bookingService, BookingResponse } from '@/services/booking.service';
+import { rentalService, HandoverRecordItem } from '@/services/rental.service';
 import { RentalContractModal } from '@/components/booking/RentalContractModal';
 import { RejectBookingModal } from '@/components/booking/RejectBookingModal';
+import { HandoverInspectionModal } from '@/components/booking/HandoverInspectionModal';
+import { HandoverProtocolViewModal } from '@/components/booking/HandoverProtocolViewModal';
 
 export default function AdminBookingsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -43,6 +47,11 @@ export default function AdminBookingsPage() {
   const [rejectLoading, setRejectLoading] = useState(false);
   const [viewingContract, setViewingContract] = useState<any | null>(null);
   const [contractLoading, setContractLoading] = useState(false);
+
+  // US-13, US-14, US-15: Bàn Giao Xe & Biên Bản Bàn Giao
+  const [handoverBooking, setHandoverBooking] = useState<BookingResponse | null>(null);
+  const [viewingHandover, setViewingHandover] = useState<HandoverRecordItem | null>(null);
+  const [handoverLoading, setHandoverLoading] = useState(false);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -110,6 +119,34 @@ export default function AdminBookingsPage() {
     } finally {
       setContractLoading(false);
     }
+  };
+
+  // US-13, US-14, US-15: Mở modal kiểm tra & lập biên bản bàn giao xe
+  const handleOpenHandover = (booking: BookingResponse) => {
+    setHandoverBooking(booking);
+  };
+
+  // US-14: Xem biên bản bàn giao xe liên kết với đơn
+  const handleViewHandover = async (bookingIdOrCode: string | number) => {
+    try {
+      setHandoverLoading(true);
+      const res = await rentalService.getHandoverByBooking(bookingIdOrCode);
+      if (res.data) {
+        setViewingHandover(res.data);
+      } else {
+        toast.info('Đơn này chưa có Biên bản bàn giao xe');
+      }
+    } catch (err: any) {
+      toast.error('Không thể tải biên bản bàn giao xe');
+    } finally {
+      setHandoverLoading(false);
+    }
+  };
+
+  // Sau khi hoàn tất bàn giao thực tế
+  const handleHandoverSuccess = (record: HandoverRecordItem) => {
+    fetchBookings();
+    setViewingHandover(record);
   };
 
   // US-08: Admin xét duyệt hồ sơ
@@ -365,6 +402,30 @@ export default function AdminBookingsPage() {
                           >
                             <FileText className="w-3.5 h-3.5 text-amber-600" />
                             <span>Hợp Đồng</span>
+                          </button>
+                        )}
+
+                        {/* US-13, US-14, US-15: Nút Bàn Giao Xe Thực Tế */}
+                        {b.status === 'CONFIRMED' && (
+                          <button
+                            onClick={() => handleOpenHandover(b)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-xs"
+                            title="Kiểm tra xe & Lập Biên bản bàn giao thực tế (Sprint 5)"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>Giao Xe</span>
+                          </button>
+                        )}
+
+                        {/* US-14: Nút Xem Biên Bản Bàn Giao nếu xe đang thuê hoặc đã trả */}
+                        {['IN_RENTAL', 'COMPLETED'].includes(b.status) && (
+                          <button
+                            onClick={() => handleViewHandover(b.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
+                            title="Xem Biên Bản Bàn Giao Xe Chuẩn Pháp Lý (US-14)"
+                          >
+                            <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Biên Bản</span>
                           </button>
                         )}
 
@@ -686,6 +747,21 @@ export default function AdminBookingsPage() {
         contract={viewingContract}
         isOpen={Boolean(viewingContract)}
         onClose={() => setViewingContract(null)}
+      />
+
+      {/* US-13, US-14, US-15: Modal Kiểm Tra & Bàn Giao Xe Thực Tế */}
+      <HandoverInspectionModal
+        booking={handoverBooking}
+        isOpen={Boolean(handoverBooking)}
+        onClose={() => setHandoverBooking(null)}
+        onSuccess={handleHandoverSuccess}
+      />
+
+      {/* US-14: Modal Xem & In Biên Bản Bàn Giao Xe Chuẩn Pháp Lý */}
+      <HandoverProtocolViewModal
+        handover={viewingHandover}
+        isOpen={Boolean(viewingHandover)}
+        onClose={() => setViewingHandover(null)}
       />
     </div>
   );

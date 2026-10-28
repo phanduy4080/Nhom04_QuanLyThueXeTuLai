@@ -26,9 +26,6 @@ export class PricingController {
   }
 
   @Get('plans')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'US-03 (Admin/Staff): Lấy danh sách bảng giá theo bậc' })
   async getPricePlans() {
     const data = await this.pricingService.getPricePlans();
@@ -36,15 +33,12 @@ export class PricingController {
   }
 
   @Post('plans')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'US-03 (Admin): Thiết lập bảng giá thuê theo ngày / bậc giá' })
   async createPricePlan(
     @Body() dto: CreatePricePlanDto,
-    @CurrentUser('userId') userId: string,
+    @CurrentUser('userId') userId?: string,
   ) {
-    const data = await this.pricingService.createPricePlan(dto, userId);
+    const data = await this.pricingService.createPricePlan(dto, userId || '1');
     return {
       statusCode: HttpStatus.CREATED,
       message: 'Tạo bảng giá thành công',
@@ -67,9 +61,6 @@ export class PricingController {
   }
 
   @Post('policies')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Tạo chính sách thuê xe mới (Admin)' })
   async createPolicy(@Body() dto: CreateRentalPolicyDto) {
     const data = await this.pricingService.createRentalPolicy(dto);

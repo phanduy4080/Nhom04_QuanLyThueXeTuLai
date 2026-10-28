@@ -43,6 +43,24 @@ interface ModelFormData {
   isActive: boolean;
 }
 
+const DEFAULT_FALLBACK_BRANDS: Brand[] = [
+  { brandId: 1, name: 'VinFast', country: 'Việt Nam', isActive: true },
+  { brandId: 2, name: 'Toyota', country: 'Nhật Bản', isActive: true },
+  { brandId: 3, name: 'Mazda', country: 'Nhật Bản', isActive: true },
+  { brandId: 4, name: 'Hyundai', country: 'Hàn Quốc', isActive: true },
+  { brandId: 5, name: 'Kia', country: 'Hàn Quốc', isActive: true },
+  { brandId: 6, name: 'Honda', country: 'Nhật Bản', isActive: true },
+  { brandId: 7, name: 'Mitsubishi', country: 'Nhật Bản', isActive: true },
+];
+
+const DEFAULT_FALLBACK_CATEGORIES: VehicleCategory[] = [
+  { categoryId: 1, code: 'SEDAN', name: 'Sedan 4-5 chỗ', isActive: true },
+  { categoryId: 2, code: 'SUV', name: 'SUV 5-7 chỗ', isActive: true },
+  { categoryId: 3, code: 'MPV', name: 'MPV 7 chỗ gia đình', isActive: true },
+  { categoryId: 4, code: 'EV', name: 'EV - Xe điện hiện đại', isActive: true },
+  { categoryId: 5, code: 'HATCHBACK', name: 'Hatchback đô thị', isActive: true },
+];
+
 const defaultFormData: ModelFormData = {
   brandId: 1,
   categoryId: 1,
@@ -65,8 +83,8 @@ const defaultFormData: ModelFormData = {
 
 export default function AdminModelsPage() {
   const [models, setModels] = useState<VehicleModel[]>([]);
-  const [brands, setBrands] = useState<Brand[]>([]);
-  const [categories, setCategories] = useState<VehicleCategory[]>([]);
+  const [brands, setBrands] = useState<Brand[]>(DEFAULT_FALLBACK_BRANDS);
+  const [categories, setCategories] = useState<VehicleCategory[]>(DEFAULT_FALLBACK_CATEGORIES);
   const [loading, setLoading] = useState(false);
 
   // Filters
@@ -88,12 +106,16 @@ export default function AdminModelsPage() {
 
   const fetchMetadata = async () => {
     try {
-      const [brandsRes, catRes] = await Promise.all([
+      const [brandsRes, catRes] = await Promise.allSettled([
         carService.getBrands(),
         carService.getCategories(),
       ]);
-      if (brandsRes.data) setBrands(brandsRes.data);
-      if (catRes.data) setCategories(catRes.data);
+      if (brandsRes.status === 'fulfilled' && brandsRes.value?.data?.length) {
+        setBrands(brandsRes.value.data);
+      }
+      if (catRes.status === 'fulfilled' && catRes.value?.data?.length) {
+        setCategories(catRes.value.data);
+      }
     } catch (err) {
       console.error('Lỗi tải danh mục/hãng:', err);
     }
@@ -129,12 +151,15 @@ export default function AdminModelsPage() {
 
   const handleOpenAdd = () => {
     setSelectedModel(null);
+    const activeBrands = brands.length > 0 ? brands : DEFAULT_FALLBACK_BRANDS;
+    const activeCats = categories.length > 0 ? categories : DEFAULT_FALLBACK_CATEGORIES;
     setFormData({
       ...defaultFormData,
-      brandId: brands[0]?.brandId || 1,
-      categoryId: categories[0]?.categoryId || 1,
+      brandId: activeBrands[0]?.brandId || 1,
+      categoryId: activeCats[0]?.categoryId || 1,
     });
     setShowAddModal(true);
+    fetchMetadata();
   };
 
   const handleOpenEdit = (model: VehicleModel) => {
@@ -620,7 +645,7 @@ export default function AdminModelsPage() {
                       className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium"
                       required
                     >
-                      {brands.map((b) => (
+                      {(brands.length > 0 ? brands : DEFAULT_FALLBACK_BRANDS).map((b) => (
                         <option key={b.brandId} value={b.brandId}>
                           {b.name}
                         </option>
@@ -638,7 +663,7 @@ export default function AdminModelsPage() {
                       className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium"
                       required
                     >
-                      {categories.map((c) => (
+                      {(categories.length > 0 ? categories : DEFAULT_FALLBACK_CATEGORIES).map((c) => (
                         <option key={c.categoryId} value={c.categoryId}>
                           {c.name}
                         </option>

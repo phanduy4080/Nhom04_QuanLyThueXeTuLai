@@ -217,9 +217,11 @@ export class OrgService {
       include: {
         _count: {
           select: {
-            vehicles: { where: { deletedAt: null } },
+            vehicles: true, // Bao gồm cả xe đã xóa mềm
             bookingsPickup: true,
             bookingsReturn: true,
+            staffList: true,
+            pricePlans: true,
           },
         },
       },
@@ -232,7 +234,9 @@ export class OrgService {
     if (
       branch._count.vehicles > 0 ||
       branch._count.bookingsPickup > 0 ||
-      branch._count.bookingsReturn > 0
+      branch._count.bookingsReturn > 0 ||
+      branch._count.staffList > 0 ||
+      branch._count.pricePlans > 0
     ) {
       await this.prisma.branch.update({
         where: { branchId: id },
@@ -241,18 +245,33 @@ export class OrgService {
       return {
         success: true,
         action: 'DEACTIVATED',
-        message: `Chi nhánh đang có ${branch._count.vehicles} xe và ${branch._count.bookingsPickup + branch._count.bookingsReturn} lịch đặt xe liên kết. Hệ thống đã chuyển sang trạng thái "Ngưng hoạt động".`,
+        message: `Chi nhánh đang có dữ liệu liên kết (${branch._count.vehicles} xe, ${branch._count.bookingsPickup + branch._count.bookingsReturn} lịch đặt xe). Hệ thống đã chuyển sang trạng thái "Ngưng hoạt động".`,
       };
     }
 
-    await this.prisma.branch.delete({
-      where: { branchId: id },
-    });
+    try {
+      await this.prisma.branchHour.deleteMany({
+        where: { branchId: id },
+      });
+      await this.prisma.branch.delete({
+        where: { branchId: id },
+      });
 
-    return {
-      success: true,
-      action: 'DELETED',
-      message: 'Đã xóa hoàn toàn chi nhánh khỏi hệ thống.',
-    };
+      return {
+        success: true,
+        action: 'DELETED',
+        message: 'Đã xóa hoàn toàn chi nhánh khỏi hệ thống.',
+      };
+    } catch {
+      await this.prisma.branch.update({
+        where: { branchId: id },
+        data: { isActive: false },
+      });
+      return {
+        success: true,
+        action: 'DEACTIVATED',
+        message: 'Chi nhánh có ràng buộc dữ liệu nên hệ thống đã chuyển sang trạng thái "Ngưng hoạt động".',
+      };
+    }
   }
 }

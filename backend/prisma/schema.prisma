@@ -1087,6 +1087,29 @@ model Booking {
   notes           String?
   approvedBy      BigInt?   @map("approved_by")
   approvedAt      DateTime? @map("approved_at") @db.Timestamptz(6)
+  identityVerified Boolean   @default(false) @map("identity_verified")
+  idCardFront     String?   @map("id_card_front")
+  idCardBack      String?   @map("id_card_back")
+  licenseFront    String?   @map("license_front")
+  licenseBack     String?   @map("license_back")
+  driverDob       DateTime? @map("driver_dob") @db.Date
+  licenseExpiry   DateTime? @map("license_expiry") @db.Date
+  licenseClass    String?   @default("B2") @map("license_class") @db.VarChar(20)
+  verificationStatus String @default("PENDING") @map("verification_status") @db.VarChar(50)
+  eligibilityResult Json?   @map("eligibility_result")
+  hasAdditionalDriver Boolean @default(false) @map("has_additional_driver")
+  additionalDriverName String? @map("additional_driver_name") @db.VarChar(255)
+  additionalDriverPhone String? @map("additional_driver_phone") @db.VarChar(50)
+  additionalDriverEmail String? @map("additional_driver_email") @db.VarChar(255)
+  additionalDriverIdNumber String? @map("additional_driver_id_number") @db.VarChar(50)
+  additionalDriverDob DateTime? @map("additional_driver_dob") @db.Date
+  additionalDriverLicenseNumber String? @map("additional_driver_license_number") @db.VarChar(50)
+  additionalDriverLicenseClass String? @map("additional_driver_license_class") @db.VarChar(20)
+  additionalDriverLicenseExpiry DateTime? @map("additional_driver_license_expiry") @db.Date
+  additionalDriverLicenseFront String? @map("additional_driver_license_front")
+  additionalDriverLicenseBack String? @map("additional_driver_license_back")
+  additionalDriverEligibility Json? @map("additional_driver_eligibility")
+  additionalDriverFee Decimal @default(0) @map("additional_driver_fee") @db.Decimal(15, 2)
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 

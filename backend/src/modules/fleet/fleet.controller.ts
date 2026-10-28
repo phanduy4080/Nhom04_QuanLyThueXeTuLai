@@ -75,7 +75,7 @@ export class FleetController {
     @Body() dto: CreateVehicleDto,
     @CurrentUser('userId') userId?: string,
   ) {
-    const result = await this.fleetService.create(dto, userId || '1');
+    const result = await this.fleetService.create(dto, userId);
     return {
       statusCode: HttpStatus.CREATED,
       message: 'Tạo xe mới thành công',

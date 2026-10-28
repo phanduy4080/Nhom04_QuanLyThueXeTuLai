@@ -275,55 +275,125 @@ export class FleetService {
    * US-01: Thêm xe mới vào đội xe
    */
   async create(dto: CreateVehicleDto, userId?: string) {
-    const userBigInt = userId ? BigInt(userId) : undefined;
+    const trimmedPlate = dto.licensePlate.trim().toUpperCase();
 
-    // Kiểm tra trùng biển số
+    // 1. Kiểm tra trùng biển số
     const existing = await this.prisma.vehicle.findFirst({
       where: {
-        licensePlate: dto.licensePlate,
+        licensePlate: trimmedPlate,
         deletedAt: null,
       },
     });
 
     if (existing) {
-      throw new BadRequestException(`Biển số xe ${dto.licensePlate} đã tồn tại trong hệ thống`);
+      throw new BadRequestException(`Biển số xe "${trimmedPlate}" đã tồn tại trong hệ thống`);
     }
 
-    const vehicle = await this.prisma.vehicle.create({
-      data: {
-        licensePlate: dto.licensePlate,
-        assetCode: dto.assetCode,
-        modelId: dto.modelId,
-        manufactureYear: dto.manufactureYear,
-        color: dto.color,
-        seats: dto.seats,
-        transmission: dto.transmission,
-        fuelType: dto.fuelType,
-        listPricePerDay: new Prisma.Decimal(dto.listPricePerDay),
-        depositAmount: new Prisma.Decimal(dto.depositAmount),
-        dailyKmLimit: dto.dailyKmLimit,
-        extraKmFee: dto.extraKmFee ? new Prisma.Decimal(dto.extraKmFee) : undefined,
-        currentBranchId: dto.currentBranchId,
-        notes: dto.notes,
-        status: 'AVAILABLE',
-        createdBy: userBigInt,
-      },
-      include: {
-        model: { include: { brand: true, category: true } },
-      },
+    // 2. Xử lý mã tài sản (tránh lỗi unique constraint khi truyền chuỗi rỗng)
+    const cleanAssetCode = dto.assetCode?.trim() ? dto.assetCode.trim() : null;
+    if (cleanAssetCode) {
+      const existingAsset = await this.prisma.vehicle.findFirst({
+        where: {
+          assetCode: cleanAssetCode,
+          deletedAt: null,
+        },
+      });
+      if (existingAsset) {
+        throw new BadRequestException(`Mã tài sản nội bộ "${cleanAssetCode}" đã tồn tại trong hệ thống`);
+      }
+    }
+
+    // 3. Kiểm tra dòng xe (Model) tồn tại
+    const targetModelId = Number(dto.modelId);
+    const model = await this.prisma.vehicleModel.findUnique({
+      where: { modelId: targetModelId },
+      include: { brand: true, category: true },
     });
 
-    if (dto.images && dto.images.length > 0) {
-      await this.saveVehicleImages(vehicle.vehicleId, dto.images);
+    if (!model) {
+      throw new BadRequestException(
+        `Dòng xe với ID ${dto.modelId} không tồn tại trong cơ sở dữ liệu. Vui lòng chọn dòng xe khác hoặc tạo mới tại Quản lý dòng xe.`,
+      );
     }
 
-    return {
-      id: vehicle.vehicleId.toString(),
-      licensePlate: vehicle.licensePlate,
-      model: vehicle.model.name,
-      status: vehicle.status,
-      message: 'Thêm xe thành công',
-    };
+    // 4. Kiểm tra chi nhánh (Branch) tồn tại
+    let validBranchId: number | undefined = undefined;
+    if (dto.currentBranchId) {
+      const targetBranchId = Number(dto.currentBranchId);
+      const branch = await this.prisma.branch.findUnique({
+        where: { branchId: targetBranchId },
+      });
+      if (!branch) {
+        throw new BadRequestException(
+          `Chi nhánh trạm xe với ID ${dto.currentBranchId} không tồn tại trong cơ sở dữ liệu. Vui lòng chọn chi nhánh có sẵn.`,
+        );
+      }
+      validBranchId = branch.branchId;
+    }
+
+    // 5. Kiểm tra người tạo (User) có tồn tại trong iam.users không (tránh lỗi Foreign Key)
+    let validUserId: bigint | undefined = undefined;
+    if (userId) {
+      try {
+        const candidateId = BigInt(userId);
+        const userExists = await this.prisma.user.findUnique({
+          where: { userId: candidateId },
+          select: { userId: true },
+        });
+        if (userExists) {
+          validUserId = candidateId;
+        }
+      } catch {
+        validUserId = undefined;
+      }
+    }
+
+    try {
+      const vehicle = await this.prisma.vehicle.create({
+        data: {
+          licensePlate: trimmedPlate,
+          assetCode: cleanAssetCode,
+          modelId: model.modelId,
+          manufactureYear: dto.manufactureYear || model.launchYear,
+          color: dto.color,
+          seats: dto.seats || model.seats,
+          transmission: dto.transmission || model.transmission,
+          fuelType: dto.fuelType || model.fuelType,
+          listPricePerDay: new Prisma.Decimal(dto.listPricePerDay),
+          depositAmount: new Prisma.Decimal(dto.depositAmount),
+          dailyKmLimit: dto.dailyKmLimit,
+          extraKmFee: dto.extraKmFee ? new Prisma.Decimal(dto.extraKmFee) : undefined,
+          currentBranchId: validBranchId,
+          notes: dto.notes,
+          status: 'AVAILABLE',
+          createdBy: validUserId,
+        },
+        include: {
+          model: { include: { brand: true, category: true } },
+        },
+      });
+
+      if (dto.images && dto.images.length > 0) {
+        await this.saveVehicleImages(vehicle.vehicleId, dto.images);
+      }
+
+      return {
+        id: vehicle.vehicleId.toString(),
+        licensePlate: vehicle.licensePlate,
+        model: `${vehicle.model.brand.name} ${vehicle.model.name}`,
+        status: vehicle.status,
+        message: 'Thêm xe thành công',
+      };
+    } catch (err: any) {
+      if (err instanceof BadRequestException) throw err;
+      if (err.code === 'P2002') {
+        throw new BadRequestException('Thông tin xe bị trùng lặp (Biển số xe hoặc Mã tài sản đã tồn tại)');
+      }
+      if (err.code === 'P2003') {
+        throw new BadRequestException('Dữ liệu liên kết không hợp lệ: Dòng xe, chi nhánh hoặc tài khoản người dùng không khớp trong cơ sở dữ liệu');
+      }
+      throw err;
+    }
   }
 
   /**
@@ -333,9 +403,11 @@ export class FleetService {
     const vehicleId = BigInt(id);
 
     const updateData: Prisma.VehicleUpdateInput = {};
-    if (dto.licensePlate) updateData.licensePlate = dto.licensePlate;
-    if (dto.assetCode) updateData.assetCode = dto.assetCode;
-    if (dto.modelId) updateData.model = { connect: { modelId: dto.modelId } };
+    if (dto.licensePlate) updateData.licensePlate = dto.licensePlate.trim().toUpperCase();
+    if (dto.assetCode !== undefined) {
+      updateData.assetCode = dto.assetCode?.trim() ? dto.assetCode.trim() : null;
+    }
+    if (dto.modelId) updateData.model = { connect: { modelId: Number(dto.modelId) } };
     if (dto.manufactureYear !== undefined) updateData.manufactureYear = dto.manufactureYear;
     if (dto.color !== undefined) updateData.color = dto.color;
     if (dto.seats !== undefined) updateData.seats = dto.seats;
@@ -345,24 +417,36 @@ export class FleetService {
     if (dto.depositAmount !== undefined) updateData.depositAmount = new Prisma.Decimal(dto.depositAmount);
     if (dto.dailyKmLimit !== undefined) updateData.dailyKmLimit = dto.dailyKmLimit;
     if (dto.extraKmFee !== undefined) updateData.extraKmFee = new Prisma.Decimal(dto.extraKmFee);
-    if (dto.currentBranchId !== undefined) updateData.currentBranch = dto.currentBranchId ? { connect: { branchId: dto.currentBranchId } } : { disconnect: true };
+    if (dto.currentBranchId !== undefined) {
+      updateData.currentBranch = dto.currentBranchId ? { connect: { branchId: Number(dto.currentBranchId) } } : { disconnect: true };
+    }
     if (dto.notes !== undefined) updateData.notes = dto.notes;
 
-    const updated = await this.prisma.vehicle.update({
-      where: { vehicleId },
-      data: updateData,
-    });
+    try {
+      const updated = await this.prisma.vehicle.update({
+        where: { vehicleId },
+        data: updateData,
+      });
 
-    if (dto.images !== undefined) {
-      await this.saveVehicleImages(vehicleId, dto.images);
+      if (dto.images !== undefined) {
+        await this.saveVehicleImages(vehicleId, dto.images);
+      }
+
+      return {
+        id: updated.vehicleId.toString(),
+        licensePlate: updated.licensePlate,
+        status: updated.status,
+        message: 'Cập nhật thông tin xe thành công',
+      };
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        throw new BadRequestException('Thông tin cập nhật bị trùng lặp (Biển số xe hoặc Mã tài sản đã tồn tại)');
+      }
+      if (err.code === 'P2003') {
+        throw new BadRequestException('Dữ liệu liên kết không hợp lệ: Dòng xe hoặc chi nhánh không tồn tại');
+      }
+      throw err;
     }
-
-    return {
-      id: updated.vehicleId.toString(),
-      licensePlate: updated.licensePlate,
-      status: updated.status,
-      message: 'Cập nhật thông tin xe thành công',
-    };
   }
 
   private async saveVehicleImages(vehicleId: bigint, imageUrls: string[]) {

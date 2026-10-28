@@ -390,3 +390,4 @@ export const RentalContractModal: React.FC<RentalContractModalProps> = ({
     </div>
   );
 };
+

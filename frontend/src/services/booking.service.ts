@@ -129,6 +129,13 @@ export interface BookingResponse {
   paymentStatus: string;
   notes?: string;
   approvedAt?: string | null;
+  contractNumber?: string | null;
+  contractCreatedAt?: string | null;
+  contractSignedAt?: string | null;
+  contractTerms?: any;
+  depositPaidAt?: string | null;
+  depositTransactionRef?: string | null;
+  rejectionReason?: string | null;
   createdAt: string;
 }
 
@@ -175,6 +182,47 @@ export const bookingService = {
   // Xem chi tiết 1 đơn đặt xe
   getBookingByIdOrCode: async (idOrCode: string | number) => {
     const res = await apiClient.get(`/bookings/${idOrCode}`);
+    return res.data;
+  },
+
+  // US-10: Nhân viên duyệt yêu cầu thuê xe của khách hàng
+  approveBooking: async (id: number, notes?: string) => {
+    const res = await apiClient.post(`/bookings/${id}/approve`, { notes });
+    return res.data;
+  },
+
+  // US-10: Nhân viên từ chối yêu cầu thuê xe của khách hàng kèm lý do
+  rejectBooking: async (id: number, reason: string, notes?: string) => {
+    const res = await apiClient.post(`/bookings/${id}/reject`, { reason, notes });
+    return res.data;
+  },
+
+  // US-11: Khách hàng thanh toán tiền cọc/tạm ứng để xác nhận giữ xe
+  payDeposit: async (idOrCode: string | number, payload: {
+    paymentMethod: string;
+    transactionRef?: string;
+    amount?: number;
+    notes?: string;
+  }) => {
+    const res = await apiClient.post(`/bookings/${idOrCode}/pay-deposit`, payload);
+    return res.data;
+  },
+
+  // US-11: Lấy thông tin thanh toán tiền cọc (VietQR ngân hàng, nội dung chuyển khoản)
+  getDepositInfo: async (idOrCode: string | number) => {
+    const res = await apiClient.get(`/bookings/${idOrCode}/deposit-info`);
+    return res.data;
+  },
+
+  // US-12: Xem chi tiết Hợp đồng thuê xe điện tử
+  getRentalContract: async (idOrCode: string | number) => {
+    const res = await apiClient.get(`/bookings/${idOrCode}/contract`);
+    return res.data;
+  },
+
+  // US-12: Khởi tạo lại Hợp đồng thuê xe điện tử
+  generateRentalContract: async (idOrCode: string | number) => {
+    const res = await apiClient.post(`/bookings/${idOrCode}/generate-contract`);
     return res.data;
   },
 

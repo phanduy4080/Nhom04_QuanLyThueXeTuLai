@@ -31,6 +31,8 @@ import { carService } from '@/services/car.service';
 import { bookingService } from '@/services/booking.service';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
+import { DepositPaymentModal } from '@/components/booking/DepositPaymentModal';
+import { RentalContractModal } from '@/components/booking/RentalContractModal';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -43,6 +45,29 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   // Modal cập nhật hồ sơ
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploading, setUploading] = useState(false);
+
+  // US-11: Modal thanh toán tiền cọc
+  const [showDepositModal, setShowDepositModal] = useState(false);
+
+  // US-12: Modal xem hợp đồng điện tử
+  const [showContractModal, setShowContractModal] = useState(false);
+  const [contractData, setContractData] = useState<any>(null);
+  const [contractLoading, setContractLoading] = useState(false);
+
+  const handleOpenContract = async () => {
+    try {
+      setContractLoading(true);
+      const res = await bookingService.getRentalContract(bookingCode);
+      if (res.data) {
+        setContractData(res.data);
+        setShowContractModal(true);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Lỗi khi tải hợp đồng điện tử');
+    } finally {
+      setContractLoading(false);
+    }
+  };
   const [modalForm, setModalForm] = useState({
     idNumber: '',
     driverDob: '',
@@ -194,8 +219,34 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             In Phiếu Đặt Xe
           </Button>
 
+          {/* US-12: Nút Xem Hợp Đồng */}
+          {['APPROVED', 'CONFIRMED', 'IN_RENTAL', 'COMPLETED'].includes(b?.status) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenContract}
+              isLoading={contractLoading}
+              leftIcon={<FileText className="w-4 h-4 text-amber-500" />}
+              className="border-amber-300 text-amber-900 bg-amber-50/60 hover:bg-amber-100"
+            >
+              Hợp Đồng Điện Tử (US-12)
+            </Button>
+          )}
+
+          {/* US-11: Nút Thanh Toán Cọc nhanh nếu chưa cọc */}
+          {b?.paymentStatus !== 'PAID_DEPOSIT' && b?.status !== 'CANCELLED' && b?.status !== 'REJECTED' && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowDepositModal(true)}
+              leftIcon={<CreditCard className="w-4 h-4 text-gray-950" />}
+            >
+              Thanh Toán Cọc (US-11)
+            </Button>
+          )}
+
           <Button
-            variant="primary"
+            variant="outline"
             size="sm"
             onClick={() => setShowUploadModal(true)}
             leftIcon={<Upload className="w-4 h-4" />}
@@ -229,18 +280,113 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Đã Xác Nhận & Giữ Xe</span>
               </span>
+            ) : b?.status === 'APPROVED' ? (
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-500 text-gray-950 font-black text-sm shadow-md">
+                <CheckCircle2 className="w-4 h-4 text-gray-950" />
+                <span>Đã Duyệt - Chờ Đặt Cọc</span>
+              </span>
             ) : b?.status === 'PENDING' ? (
               <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 text-gray-950 font-black text-sm shadow-md">
                 <Clock className="w-4 h-4" />
-                <span>Chờ Duyệt Hồ Sơ & Cọc</span>
+                <span>Chờ Nhân Viên Duyệt</span>
+              </span>
+            ) : b?.status === 'REJECTED' ? (
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-sm shadow-md">
+                <XCircle className="w-4 h-4" />
+                <span>Yêu Cầu Bị Từ Chối</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-500 text-white font-bold text-sm">
+              <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-700 text-white font-bold text-sm">
                 <span>{b?.status}</span>
               </span>
             )}
           </div>
         </div>
+
+        {/* US-11 & US-12 Callout Banners */}
+        {/* Banner 1: Chờ khách thanh toán tiền cọc (US-11) */}
+        {b?.paymentStatus !== 'PAID_DEPOSIT' && b?.status !== 'CANCELLED' && b?.status !== 'REJECTED' && (
+          <div className="px-6 py-4 bg-gradient-to-r from-amber-500 to-amber-400 text-gray-950 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-600/30">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-white/30 backdrop-blur-xs text-gray-950 shrink-0">
+                <CreditCard className="w-6 h-6" />
+              </div>
+              <div>
+                <strong className="text-sm sm:text-base font-black block">
+                  {b?.status === 'APPROVED' ? 'Yêu Cầu Thuê Xe Đã Được Duyệt Thành Công!' : 'Vui Lòng Đặt Cọc Để Giữ Xe Chắc Chắn'}
+                </strong>
+                <p className="text-xs text-gray-900 font-medium">
+                  Số tiền cọc: <strong>{formatCurrency(b?.depositAmount || 0)}</strong> (hoàn 100% khi trả xe). Sau khi cọc, hệ thống tự động sinh Hợp đồng điện tử.
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowDepositModal(true)}
+              className="bg-gray-950 hover:bg-slate-900 text-white border-gray-950 shrink-0 shadow-md font-black"
+              leftIcon={<CreditCard className="w-4 h-4 text-amber-400" />}
+            >
+              Thanh Toán Cọc Ngay (US-11)
+            </Button>
+          </div>
+        )}
+
+        {/* Banner 2: Đã thanh toán cọc & có hợp đồng (US-11, US-12) */}
+        {(b?.paymentStatus === 'PAID_DEPOSIT' || b?.status === 'CONFIRMED') && (
+          <div className="px-6 py-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border-b border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-600 text-white shrink-0 shadow-xs">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <strong className="text-sm font-black text-emerald-950">
+                    Đã Hoàn Tất Đặt Cọc & Giữ Xe Thành Công!
+                  </strong>
+                  <span className="text-[10px] font-mono font-bold bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded">
+                    PAID_DEPOSIT
+                  </span>
+                </div>
+                <p className="text-slate-600 mt-0.5">
+                  Mã Hợp Đồng: <strong className="font-mono text-emerald-800">{b?.contractNumber || 'HD-QUICKHATCH-2026'}</strong> • Tiền cọc: <strong>{formatCurrency(b?.depositAmount || 0)}</strong>
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleOpenContract}
+              isLoading={contractLoading}
+              leftIcon={<FileText className="w-4 h-4 text-emerald-700" />}
+              className="border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 font-bold shrink-0 shadow-2xs"
+            >
+              Xem Hợp Đồng Điện Tử (US-12)
+            </Button>
+          </div>
+        )}
+
+        {/* Banner 3: Bị từ chối (US-10) */}
+        {b?.status === 'REJECTED' && (
+          <div className="px-6 py-4 bg-rose-50 border-b border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-rose-600 text-white shrink-0 mt-0.5">
+                <XCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <strong className="text-sm font-black text-rose-950 block">
+                  Đơn Đặt Xe Không Được Phê Duyệt
+                </strong>
+                <p className="text-rose-800 font-medium mt-0.5">
+                  Lý do từ chối: <strong>{b?.rejectionReason || 'Hồ sơ hoặc thông tin xe không đáp ứng quy chuẩn.'}</strong>
+                </p>
+              </div>
+            </div>
+            <span className="text-slate-500 text-[11px]">Hotline CSKH: 1900 8888</span>
+          </div>
+        )}
 
         {/* Status of Verification Banner (US-07 & US-08) */}
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -814,6 +960,25 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       )}
+
+      {/* US-11: Modal Thanh Toán Tiền Cọc (VietQR / MoMo / Quầy) */}
+      <DepositPaymentModal
+        booking={b}
+        isOpen={showDepositModal}
+        onClose={() => setShowDepositModal(false)}
+        onSuccess={(updated) => {
+          setBookingData(updated);
+          // Gợi ý mở hợp đồng ngay sau khi thanh toán cọc thành công
+          handleOpenContract();
+        }}
+      />
+
+      {/* US-12: Modal Xem Hợp Đồng Thuê Xe Điện Tử */}
+      <RentalContractModal
+        contract={contractData}
+        isOpen={showContractModal}
+        onClose={() => setShowContractModal(false)}
+      />
     </div>
   );
 }

@@ -16,6 +16,8 @@ import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { QueryBookingsDto } from './dto/query-bookings.dto';
 import { VerifyDocumentsDto } from './dto/verify-documents.dto';
 import { ReviewVerificationDto } from './dto/review-verification.dto';
+import { RejectBookingDto } from './dto/reject-booking.dto';
+import { PayDepositDto } from './dto/pay-deposit.dto';
 
 @Controller('bookings')
 export class BookingsController {
@@ -131,6 +133,97 @@ export class BookingsController {
     return {
       statusCode: 200,
       message: 'Cập nhật kết quả xét duyệt hồ sơ thành công',
+      data,
+    };
+  }
+
+  /**
+   * US-10: Nhân viên duyệt yêu cầu thuê xe của khách hàng
+   */
+  @Post(':id/approve')
+  async approveBooking(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('notes') notes?: string,
+    @Req() req?: any,
+  ) {
+    const staffUserId = req?.user?.userId;
+    const data = await this.bookingsService.approveBooking(id, notes, staffUserId);
+    return {
+      statusCode: 200,
+      message: 'Đã phê duyệt yêu cầu thuê xe thành công',
+      data,
+    };
+  }
+
+  /**
+   * US-10: Nhân viên từ chối yêu cầu thuê xe của khách hàng kèm lý do
+   */
+  @Post(':id/reject')
+  async rejectBooking(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectBookingDto,
+    @Req() req?: any,
+  ) {
+    const staffUserId = req?.user?.userId;
+    const data = await this.bookingsService.rejectBooking(id, dto, staffUserId);
+    return {
+      statusCode: 200,
+      message: 'Đã từ chối yêu cầu thuê xe và giải phóng xe thành công',
+      data,
+    };
+  }
+
+  /**
+   * US-11: Khách hàng thanh toán tiền cọc/tạm ứng để xác nhận giữ xe
+   */
+  @Post(':idOrCode/pay-deposit')
+  async payDeposit(
+    @Param('idOrCode') idOrCode: string,
+    @Body() dto: PayDepositDto,
+  ) {
+    const data = await this.bookingsService.payDeposit(idOrCode, dto);
+    return {
+      statusCode: 200,
+      message: 'Thanh toán tiền cọc thành công! Xe đã được giữ và hợp đồng điện tử đã được khởi tạo.',
+      data,
+    };
+  }
+
+  /**
+   * US-11: Lấy thông tin thanh toán tiền cọc (VietQR ngân hàng, nội dung chuyển khoản)
+   */
+  @Get(':idOrCode/deposit-info')
+  async getDepositInfo(@Param('idOrCode') idOrCode: string) {
+    const data = await this.bookingsService.getDepositInfo(idOrCode);
+    return {
+      statusCode: 200,
+      message: 'Lấy thông tin thanh toán tiền cọc thành công',
+      data,
+    };
+  }
+
+  /**
+   * US-12: Xem chi tiết Hợp đồng thuê xe điện tử
+   */
+  @Get(':idOrCode/contract')
+  async getRentalContract(@Param('idOrCode') idOrCode: string) {
+    const data = await this.bookingsService.getRentalContract(idOrCode);
+    return {
+      statusCode: 200,
+      message: 'Lấy hợp đồng thuê xe điện tử thành công',
+      data,
+    };
+  }
+
+  /**
+   * US-12: Tự động khởi tạo / tái tạo Hợp đồng thuê xe điện tử
+   */
+  @Post(':idOrCode/generate-contract')
+  async generateRentalContract(@Param('idOrCode') idOrCode: string) {
+    const data = await this.bookingsService.generateRentalContract(idOrCode);
+    return {
+      statusCode: 201,
+      message: 'Khởi tạo hợp đồng thuê xe điện tử thành công',
       data,
     };
   }

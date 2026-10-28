@@ -22,3 +22,4 @@ export class QueryHandoversDto {
   @IsString()
   bookingCode?: string;
 }
+

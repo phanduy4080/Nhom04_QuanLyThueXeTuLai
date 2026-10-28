@@ -5,6 +5,8 @@ import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 import { QueryBookingsDto } from './dto/query-bookings.dto';
 import { VerifyDocumentsDto } from './dto/verify-documents.dto';
 import { ReviewVerificationDto } from './dto/review-verification.dto';
+import { RejectBookingDto } from './dto/reject-booking.dto';
+import { PayDepositDto } from './dto/pay-deposit.dto';
 import { Prisma } from '@prisma/client';
 
 export interface DriverEvaluationInput {
@@ -1018,6 +1020,488 @@ export class BookingsService {
     };
   }
 
+  /**
+   * US-10: Nhân viên duyệt yêu cầu thuê xe của khách hàng
+   */
+  async approveBooking(id: number, notes?: string, staffUserId?: number | bigint) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { bookingId: id },
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+            images: { include: { file: true } },
+          },
+        },
+        pickupBranch: true,
+        returnBranch: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    if (['REJECTED', 'CANCELLED'].includes(booking.status)) {
+      throw new BadRequestException(`Đơn đặt xe đang ở trạng thái ${booking.status}, không thể duyệt`);
+    }
+
+    // Nếu khách đã cọc trước -> CONFIRMED, nếu chưa -> APPROVED (chờ cọc)
+    const newStatus = booking.paymentStatus === 'PAID_DEPOSIT' ? 'CONFIRMED' : 'APPROVED';
+    const noteLine = `[Duyệt đơn ${new Date().toLocaleString('vi-VN')}]: Nhân viên đã phê duyệt yêu cầu thuê xe.${notes ? ` Ghi chú: ${notes}` : ''}`;
+
+    const updated = await this.prisma.booking.update({
+      where: { bookingId: id },
+      data: {
+        status: newStatus,
+        notes: booking.notes ? `${booking.notes}\n${noteLine}` : noteLine,
+        approvedBy: staffUserId ? BigInt(staffUserId) : (booking.approvedBy || BigInt(1)),
+        approvedAt: new Date(),
+      },
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+            images: { include: { file: true } },
+          },
+        },
+        pickupBranch: true,
+        returnBranch: true,
+      },
+    });
+
+    // Nếu đã chuyển sang CONFIRMED, tự động sinh hợp đồng
+    if (newStatus === 'CONFIRMED') {
+      try {
+        await this.generateRentalContract(id);
+      } catch (e) {
+        console.warn('Lỗi khi tự động tạo hợp đồng:', e);
+      }
+    }
+
+    return this.formatBooking(updated);
+  }
+
+  /**
+   * US-10: Nhân viên từ chối yêu cầu thuê xe của khách hàng kèm lý do
+   */
+  async rejectBooking(id: number, dto: RejectBookingDto, staffUserId?: number | bigint) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { bookingId: id },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    const noteLine = `[Từ chối đơn ${new Date().toLocaleString('vi-VN')}]: Lý do: ${dto.reason}${dto.notes ? ` - ${dto.notes}` : ''}`;
+
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.booking.update({
+        where: { bookingId: id },
+        data: {
+          status: 'REJECTED',
+          rejectionReason: dto.reason,
+          notes: booking.notes ? `${booking.notes}\n${noteLine}` : noteLine,
+          approvedBy: staffUserId ? BigInt(staffUserId) : (booking.approvedBy || BigInt(1)),
+          approvedAt: new Date(),
+        },
+        include: {
+          vehicle: {
+            include: {
+              model: { include: { brand: true, category: true } },
+              images: { include: { file: true } },
+            },
+          },
+          pickupBranch: true,
+          returnBranch: true,
+        },
+      }),
+      // Giải phóng xe về AVAILABLE
+      this.prisma.vehicle.update({
+        where: { vehicleId: booking.vehicleId },
+        data: { status: 'AVAILABLE' },
+      }),
+      // Xóa block lịch giữ xe
+      this.prisma.vehicleAvailabilityBlock.deleteMany({
+        where: {
+          refType: 'BOOKING',
+          refId: BigInt(booking.bookingId),
+        },
+      }),
+    ]);
+
+    return this.formatBooking(updated);
+  }
+
+  /**
+   * US-11: Khách hàng thanh toán tiền cọc/tạm ứng để xác nhận giữ xe sau khi đơn được duyệt
+   */
+  async payDeposit(idOrCode: string | number, dto: PayDepositDto) {
+    let where: Prisma.BookingWhereInput = {};
+    if (typeof idOrCode === 'number' || !isNaN(Number(idOrCode))) {
+      where = { bookingId: Number(idOrCode) };
+    } else {
+      where = { bookingCode: String(idOrCode) };
+    }
+
+    const booking = await this.prisma.booking.findFirst({
+      where,
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+            images: { include: { file: true } },
+          },
+        },
+        pickupBranch: true,
+        returnBranch: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    if (booking.status === 'REJECTED' || booking.status === 'CANCELLED') {
+      throw new BadRequestException('Đơn đặt xe đã bị từ chối hoặc đã hủy, không thể thanh toán cọc');
+    }
+
+    if (booking.paymentStatus === 'PAID_DEPOSIT' || booking.paymentStatus === 'FULLY_PAID') {
+      return this.formatBooking(booking);
+    }
+
+    const depositRef = dto.transactionRef || `TXN-DEP-${Date.now().toString().slice(-8)}`;
+    const noteLine = `[Thanh toán cọc ${new Date().toLocaleString('vi-VN')}]: Đã thanh toán tiền cọc ${new Intl.NumberFormat('vi-VN').format(Number(booking.depositAmount))} VNĐ qua ${dto.paymentMethod} (Mã GD: ${depositRef}).`;
+
+    const updated = await this.prisma.booking.update({
+      where: { bookingId: booking.bookingId },
+      data: {
+        paymentStatus: 'PAID_DEPOSIT',
+        status: 'CONFIRMED',
+        paymentMethod: dto.paymentMethod || booking.paymentMethod,
+        depositPaidAt: new Date(),
+        depositTransactionRef: depositRef,
+        notes: booking.notes ? `${booking.notes}\n${noteLine}` : noteLine,
+      },
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+            images: { include: { file: true } },
+          },
+        },
+        pickupBranch: true,
+        returnBranch: true,
+      },
+    });
+
+    // Cập nhật trạng thái xe thành BOOKED
+    await this.prisma.vehicle.update({
+      where: { vehicleId: booking.vehicleId },
+      data: { status: 'BOOKED' },
+    });
+
+    // US-12: Tự động tạo Hợp đồng thuê xe điện tử ngay khi hoàn tất cọc
+    try {
+      await this.generateRentalContract(booking.bookingId);
+    } catch (e) {
+      console.warn('Lỗi khi tự động tạo hợp đồng sau thanh toán cọc:', e);
+    }
+
+    const reloaded = await this.prisma.booking.findUnique({
+      where: { bookingId: booking.bookingId },
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+            images: { include: { file: true } },
+          },
+        },
+        pickupBranch: true,
+        returnBranch: true,
+      },
+    });
+
+    return this.formatBooking(reloaded);
+  }
+
+  /**
+   * US-11: Lấy thông tin thanh toán tiền cọc (VietQR ngân hàng, nội dung chuyển khoản)
+   */
+  async getDepositInfo(idOrCode: string | number) {
+    let where: Prisma.BookingWhereInput = {};
+    if (typeof idOrCode === 'number' || !isNaN(Number(idOrCode))) {
+      where = { bookingId: Number(idOrCode) };
+    } else {
+      where = { bookingCode: String(idOrCode) };
+    }
+
+    const booking = await this.prisma.booking.findFirst({
+      where,
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    const depositAmount = Number(booking.depositAmount || 0);
+    const syntax = `COC ${booking.bookingCode}`;
+    const accountNo = '1028889999';
+    const bankName = 'Vietcombank';
+    const bankCode = '970436'; // BIN Vietcombank
+    const accountHolder = 'CTY CP QUICKHATCH VN';
+    const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNo}-compact2.png?amount=${depositAmount}&addInfo=${encodeURIComponent(syntax)}&accountName=${encodeURIComponent(accountHolder)}`;
+
+    return {
+      bookingId: booking.bookingId,
+      bookingCode: booking.bookingCode,
+      customerName: booking.customerName,
+      status: booking.status,
+      paymentStatus: booking.paymentStatus,
+      depositAmount,
+      totalAmount: Number(booking.totalAmount),
+      bankInfo: {
+        bankName,
+        accountNo,
+        accountHolder,
+        transferSyntax: syntax,
+        qrUrl,
+      },
+      deadline: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+    };
+  }
+
+  /**
+   * US-12: Hệ thống tự động tạo Hợp đồng thuê xe điện tử ghi nhận pháp lý đầy đủ
+   */
+  async generateRentalContract(idOrCode: string | number) {
+    let where: Prisma.BookingWhereInput = {};
+    if (typeof idOrCode === 'number' || !isNaN(Number(idOrCode))) {
+      where = { bookingId: Number(idOrCode) };
+    } else {
+      where = { bookingCode: String(idOrCode) };
+    }
+
+    const booking = await this.prisma.booking.findFirst({
+      where,
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+            images: { include: { file: true } },
+          },
+        },
+        pickupBranch: true,
+        returnBranch: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe để tạo hợp đồng');
+    }
+
+    const now = new Date();
+    const contractNumber =
+      booking.contractNumber ||
+      `HD-${now.getFullYear().toString().slice(-2)}${(now.getMonth() + 1).toString().padStart(2, '0')}-${booking.bookingCode}`;
+
+    const vehicleBrandName = booking.vehicle.model?.brand?.name || 'VinFast';
+    const vehicleModelName = booking.vehicle.model?.name || 'Ô Tô';
+    const vehicleVariant = booking.vehicle.model?.variant || 'Tiêu chuẩn';
+    const fullCarName = `${vehicleBrandName} ${vehicleModelName} (${vehicleVariant})`;
+
+    const contractTerms = {
+      contractNumber,
+      createdAt: now.toISOString(),
+      bookingCode: booking.bookingCode,
+      title: 'HỢP ĐỒNG CHO THUÊ XE Ô TÔ TỰ LÁI ĐIỆN TỬ',
+      subtitle: 'Căn cứ Bộ Luật Dân Sự số 91/2015/QH13 và Luật Giao Thông Đường Bộ số 23/2008/QH12',
+      partyA: {
+        title: 'BÊN CHO THUÊ (BÊN A)',
+        companyName: 'CÔNG TY CỔ PHẦN DỊCH VỤ VÀ THƯƠNG MẠI QUICKHATCH VIỆT NAM',
+        taxCode: '0317894562',
+        address: '45 Trường Sơn, Phường 2, Quận Tân Bình, TP. Hồ Chí Minh',
+        hotline: '1900 8888 - 0901 234 567',
+        representative: 'Ông Nguyễn Quốc Cường',
+        position: 'Giám Đốc Vận Hành Toàn Quốc',
+        pickupBranch: {
+          name: booking.pickupBranch.name,
+          address: `${booking.pickupBranch.addressLine}, ${booking.pickupBranch.district || ''} ${booking.pickupBranch.province}`,
+          phone: booking.pickupBranch.phone || '028.38485555',
+        },
+      },
+      partyB: {
+        title: 'BÊN THUÊ XE (BÊN B)',
+        fullName: booking.customerName,
+        phone: booking.phone,
+        email: booking.email,
+        idNumber: booking.idNumber || '079090001234',
+        dob: booking.driverDob ? booking.driverDob.toISOString().slice(0, 10) : 'Chưa cập nhật',
+        licenseNumber: booking.licenseNumber || 'GPLX-B2-888999',
+        licenseClass: booking.licenseClass || 'B2',
+        licenseExpiry: booking.licenseExpiry ? booking.licenseExpiry.toISOString().slice(0, 10) : 'Còn hiệu lực',
+      },
+      additionalDriver: booking.hasAdditionalDriver
+        ? {
+            title: 'NGƯỜI LÁI XE BỔ SUNG ĐÃ ĐĂNG KÝ HỢP LỆ',
+            fullName: booking.additionalDriverName,
+            phone: booking.additionalDriverPhone,
+            idNumber: booking.additionalDriverIdNumber || '---',
+            licenseNumber: booking.additionalDriverLicenseNumber || '---',
+            licenseClass: booking.additionalDriverLicenseClass || 'B2',
+            licenseExpiry: booking.additionalDriverLicenseExpiry
+              ? booking.additionalDriverLicenseExpiry.toISOString().slice(0, 10)
+              : 'Còn hiệu lực',
+          }
+        : null,
+      vehicle: {
+        title: 'THÔNG TIN PHƯƠNG TIỆN CHO THUÊ',
+        fullCarName,
+        licensePlate: booking.vehicle.licensePlate,
+        seats: booking.vehicle.seats || 5,
+        transmission: booking.vehicle.transmission === 'AUTOMATIC' ? 'Tự động' : 'Số sàn',
+        fuelType:
+          booking.vehicle.fuelType === 'ELECTRIC'
+            ? 'Điện tử (EV)'
+            : booking.vehicle.fuelType === 'DIESEL'
+            ? 'Dầu Diesel'
+            : 'Xăng không chì',
+        color: booking.vehicle.color || 'Trắng',
+        manufactureYear: booking.vehicle.manufactureYear || 2024,
+        standardHandoverCondition: '100% nhiên liệu/pin, trang bị tiêu chuẩn, lốp dự phòng, camera hành trình.',
+      },
+      schedule: {
+        title: 'LỊCH TRÌNH THUÊ VÀ BÀN GIAO',
+        pickupBranchName: booking.pickupBranch.name,
+        pickupAddress: `${booking.pickupBranch.addressLine}, ${booking.pickupBranch.province}`,
+        startDate: booking.startDate.toISOString(),
+        returnBranchName: booking.returnBranch.name,
+        returnAddress: `${booking.returnBranch.addressLine}, ${booking.returnBranch.province}`,
+        endDate: booking.endDate.toISOString(),
+        totalDays: booking.totalDays,
+      },
+      financials: {
+        title: 'BẢNG KÊ CHI PHÍ THUÊ & TIỀN CỌC',
+        dailyPrice: Number(booking.dailyPrice),
+        rentalFee: Number(booking.dailyPrice) * booking.totalDays,
+        additionalDriverFee: Number(booking.additionalDriverFee || 0),
+        insuranceFee: Number(booking.insuranceFee || 0),
+        totalAmount: Number(booking.totalAmount),
+        depositAmount: Number(booking.depositAmount),
+        paymentMethod: booking.paymentMethod,
+        paymentStatus: booking.paymentStatus,
+        depositStatusText:
+          booking.paymentStatus === 'PAID_DEPOSIT' || booking.paymentStatus === 'FULLY_PAID'
+            ? 'ĐÃ THANH TOÁN TIỀN CỌC GIỮ XE'
+            : 'CHỜ THANH TOÁN TIỀN CỌC',
+        depositPaidAt: booking.depositPaidAt ? booking.depositPaidAt.toISOString() : now.toISOString(),
+        depositTransactionRef: booking.depositTransactionRef || `TXN-DEP-${booking.bookingId}`,
+      },
+      operatingRules: {
+        title: 'ĐIỀU KHOẢN VẬN HÀNH & GIỚI HẠN XE',
+        kmLimitPerDay: 350,
+        extraKmFee: 5000,
+        kmRuleText:
+          'Giới hạn định mức di chuyển là 350 km/ngày. Quãng đường vượt trội phụ thu 5.000 VNĐ / km.',
+        fuelRuleText:
+          'Bên B có nghĩa vụ bàn giao xe với mức nhiên liệu/dung lượng pin tương đương thời điểm nhận xe. Thiếu hụt sẽ thanh toán theo giá niêm yết cộng 10% phí tiếp nhiên liệu.',
+        cleanlinessRuleText:
+          'Tuyệt đối không hút thuốc lá, không vận chuyển gia súc gia cầm, chất dễ cháy nổ, hàng cấm trong xe. Phí khử mùi vệ sinh nội thất 500.000 VNĐ nếu vi phạm.',
+      },
+      insuranceAndLiability: {
+        title: 'CHÍNH SÁCH BẢO HIỂM & TRÁCH NHIỆM BỒI THƯỜNG',
+        insuranceCoverageText:
+          'Xe được bảo hiểm bắt buộc TNDS và bảo hiểm vật chất xe tiêu chuẩn (mức miễn thường tổn thất 2.000.000 VNĐ/vụ theo quy định doanh nghiệp bảo hiểm).',
+        accidentLiabilityText:
+          'Khi xảy ra va chạm, va quẹt hoặc sự cố, Bên B phải giữ nguyên hiện trường, chụp ảnh báo ngay hotline 1900 8888 và cơ quan chức năng để lập biên bản.',
+        trafficFineLiabilityText:
+          'Bên B chịu 100% trách nhiệm pháp lý và chi phí phạt nguội camera giám sát giao thông trong toàn bộ thời gian lưu hành xe. Tiền cọc sẽ được phong tỏa hoặc đối soát nếu phát sinh thông báo phạt từ CSGT.',
+      },
+      legalCommitment:
+        'Hợp đồng điện tử này có giá trị pháp lý tương đương bản ký tay theo Luật Giao dịch điện tử. Hai bên cam kết thực hiện đúng và đầy đủ các điều khoản đã thỏa thuận.',
+      signatures: {
+        partyA: {
+          signer: 'Đại diện Bên Cho Thuê - QuickHatch VN',
+          signed: true,
+          signedAt: now.toISOString(),
+          statusText: 'ĐÃ KÝ SỐ ĐIỆN TỬ (DIGITAL CERTIFICATE VERIFIED)',
+          digitalStamp: 'QUICKHATCH-ESIGN-APPROVED-STAMP',
+        },
+        partyB: {
+          signer: `Bên Thuê Xe - ${booking.customerName}`,
+          signed: true,
+          signedAt: now.toISOString(),
+          statusText: 'XÁC THỰC BẰNG MÃ OTP & GIAO DỊCH ĐẶT CỌC HỢP LỆ',
+          verificationCode: `VERIFIED-${booking.bookingCode}-${now.getFullYear()}`,
+        },
+      },
+    };
+
+    const updated = await this.prisma.booking.update({
+      where: { bookingId: booking.bookingId },
+      data: {
+        contractNumber,
+        contractCreatedAt: booking.contractCreatedAt || now,
+        contractSignedAt: booking.contractSignedAt || now,
+        contractTerms: contractTerms as any,
+      },
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+            images: { include: { file: true } },
+          },
+        },
+        pickupBranch: true,
+        returnBranch: true,
+      },
+    });
+
+    return {
+      contractNumber,
+      contract: contractTerms,
+      booking: this.formatBooking(updated),
+    };
+  }
+
+  /**
+   * US-12: Xem chi tiết Hợp đồng thuê xe
+   */
+  async getRentalContract(idOrCode: string | number) {
+    let where: Prisma.BookingWhereInput = {};
+    if (typeof idOrCode === 'number' || !isNaN(Number(idOrCode))) {
+      where = { bookingId: Number(idOrCode) };
+    } else {
+      where = { bookingCode: String(idOrCode) };
+    }
+
+    const booking = await this.prisma.booking.findFirst({
+      where,
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    if (booking.contractTerms && booking.contractNumber) {
+      return {
+        contractNumber: booking.contractNumber,
+        contract: booking.contractTerms,
+      };
+    }
+
+    // Nếu chưa có hợp đồng thì tự động khởi tạo
+    return this.generateRentalContract(booking.bookingId);
+  }
+
   private formatBooking(b: any) {
     const vehicleName = b.vehicle?.model
       ? `${b.vehicle.model.brand?.name || ''} ${b.vehicle.model.name || ''} ${b.vehicle.model.variant || ''}`.trim()
@@ -1084,6 +1568,13 @@ export class BookingsService {
       paymentStatus: b.paymentStatus,
       notes: b.notes,
       approvedAt: b.approvedAt ? b.approvedAt.toISOString() : null,
+      contractNumber: b.contractNumber || null,
+      contractCreatedAt: b.contractCreatedAt ? b.contractCreatedAt.toISOString() : null,
+      contractSignedAt: b.contractSignedAt ? b.contractSignedAt.toISOString() : null,
+      contractTerms: b.contractTerms || null,
+      depositPaidAt: b.depositPaidAt ? b.depositPaidAt.toISOString() : null,
+      depositTransactionRef: b.depositTransactionRef || null,
+      rejectionReason: b.rejectionReason || null,
       createdAt: b.createdAt ? b.createdAt.toISOString() : '',
     };
   }

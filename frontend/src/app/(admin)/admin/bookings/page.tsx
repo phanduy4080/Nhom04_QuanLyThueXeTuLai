@@ -23,6 +23,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/utils';
 import { bookingService, BookingResponse } from '@/services/booking.service';
+import { RentalContractModal } from '@/components/booking/RentalContractModal';
+import { RejectBookingModal } from '@/components/booking/RejectBookingModal';
 
 export default function AdminBookingsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -35,6 +37,12 @@ export default function AdminBookingsPage() {
   const [inspectBooking, setInspectBooking] = useState<BookingResponse | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+
+  // US-10 & US-12 Modals
+  const [rejectingBooking, setRejectingBooking] = useState<BookingResponse | null>(null);
+  const [rejectLoading, setRejectLoading] = useState(false);
+  const [viewingContract, setViewingContract] = useState<any | null>(null);
+  const [contractLoading, setContractLoading] = useState(false);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -57,24 +65,50 @@ export default function AdminBookingsPage() {
     fetchBookings();
   }, [fetchBookings]);
 
+  // US-10: Nhân viên duyệt yêu cầu thuê xe
   const handleApprove = async (id: number, code: string) => {
     try {
-      await bookingService.updateBookingStatus(id, 'CONFIRMED', 'Admin đã duyệt cọc thành công');
-      toast.success(`Đã duyệt cọc đơn đặt xe ${code} thành công!`);
+      await bookingService.approveBooking(id, 'Admin đã phê duyệt yêu cầu thuê xe');
+      toast.success(`Đã phê duyệt yêu cầu thuê xe ${code} thành công! Đơn chuyển sang trạng thái Chờ Khách Cọc.`);
       fetchBookings();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Lỗi khi duyệt cọc đơn');
+      toast.error(err.response?.data?.message || 'Lỗi khi duyệt đơn');
     }
   };
 
-  const handleCancel = async (id: number, code: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn hủy đơn đặt xe ${code}?`)) return;
+  // US-10: Mở modal từ chối
+  const handleOpenReject = (booking: BookingResponse) => {
+    setRejectingBooking(booking);
+  };
+
+  // US-10: Xác nhận từ chối đơn kèm lý do
+  const handleConfirmReject = async (reason: string, notes?: string) => {
+    if (!rejectingBooking) return;
     try {
-      await bookingService.updateBookingStatus(id, 'CANCELLED', 'Admin từ chối / hủy đơn');
-      toast.info(`Đã hủy đơn ${code}`);
+      setRejectLoading(true);
+      await bookingService.rejectBooking(rejectingBooking.id, reason, notes);
+      toast.success(`Đã từ chối đơn đặt xe ${rejectingBooking.bookingCode} và tự động giải phóng xe.`);
+      setRejectingBooking(null);
       fetchBookings();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Lỗi khi hủy đơn');
+      toast.error(err.response?.data?.message || 'Lỗi khi từ chối đơn');
+    } finally {
+      setRejectLoading(false);
+    }
+  };
+
+  // US-12: Xem Hợp đồng thuê xe điện tử
+  const handleViewContract = async (idOrCode: string | number) => {
+    try {
+      setContractLoading(true);
+      const res = await bookingService.getRentalContract(idOrCode);
+      if (res.data) {
+        setViewingContract(res.data);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Lỗi khi tải hợp đồng điện tử');
+    } finally {
+      setContractLoading(false);
     }
   };
 
@@ -124,16 +158,20 @@ export default function AdminBookingsPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'APPROVED':
+        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-100 text-cyan-800 border border-cyan-200 whitespace-nowrap shadow-2xs">Đã Duyệt (Chờ Cọc)</span>;
       case 'CONFIRMED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap shadow-2xs">Đã Xác Nhận</span>;
+        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap shadow-2xs">Đã Cọc (Giữ Xe)</span>;
       case 'PENDING':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">Chờ Duyệt Cọc</span>;
+        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">Chờ Nhân Viên Duyệt</span>;
+      case 'REJECTED':
+        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 whitespace-nowrap shadow-2xs">Đã Từ Chối</span>;
       case 'IN_RENTAL':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200 whitespace-nowrap shadow-2xs">Đang Thuê</span>;
+        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 whitespace-nowrap shadow-2xs">Đang Thuê</span>;
       case 'COMPLETED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">Đã Trả Xe</span>;
+        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">Đã Hoàn Tất</span>;
       case 'CANCELLED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 whitespace-nowrap shadow-2xs">Đã Hủy</span>;
+        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-600 border border-slate-300 whitespace-nowrap shadow-2xs">Đã Hủy</span>;
       default:
         return <span className="whitespace-nowrap">{status}</span>;
     }
@@ -206,10 +244,12 @@ export default function AdminBookingsPage() {
             className="w-full h-11 px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400"
           >
             <option value="ALL">Tất cả trạng thái đơn</option>
-            <option value="PENDING">Chờ Duyệt (PENDING)</option>
-            <option value="CONFIRMED">Đã Xác Nhận (CONFIRMED)</option>
+            <option value="PENDING">Chờ Nhân Viên Duyệt (PENDING)</option>
+            <option value="APPROVED">Đã Duyệt - Chờ Khách Cọc (APPROVED)</option>
+            <option value="CONFIRMED">Đã Cọc - Giữ Xe (CONFIRMED)</option>
             <option value="IN_RENTAL">Đang Thuê (IN_RENTAL)</option>
             <option value="COMPLETED">Đã Hoàn Thành (COMPLETED)</option>
+            <option value="REJECTED">Đã Từ Chối (REJECTED)</option>
             <option value="CANCELLED">Đã Hủy (CANCELLED)</option>
           </select>
         </div>
@@ -316,19 +356,34 @@ export default function AdminBookingsPage() {
                           <span>Hồ Sơ</span>
                         </button>
 
+                        {/* US-12: Nút Xem Hợp Đồng */}
+                        {['APPROVED', 'CONFIRMED', 'IN_RENTAL', 'COMPLETED'].includes(b.status) && (
+                          <button
+                            onClick={() => handleViewContract(b.id)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+                            title="Xem Hợp Đồng Thuê Xe Điện Tử (US-12)"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Hợp Đồng</span>
+                          </button>
+                        )}
+
+                        {/* US-10: Thao tác duyệt hoặc từ chối */}
                         {b.status === 'PENDING' && (
                           <>
                             <button
                               onClick={() => handleApprove(b.id, b.bookingCode)}
                               className="inline-flex items-center px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+                              title="Duyệt yêu cầu thuê xe của khách hàng"
                             >
-                              Duyệt Cọc
+                              Duyệt Đơn
                             </button>
                             <button
-                              onClick={() => handleCancel(b.id, b.bookingCode)}
+                              onClick={() => handleOpenReject(b)}
                               className="inline-flex items-center px-2 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap border border-rose-200"
+                              title="Từ chối yêu cầu thuê xe"
                             >
-                              Hủy
+                              Từ Chối
                             </button>
                           </>
                         )}
@@ -616,6 +671,22 @@ export default function AdminBookingsPage() {
           </div>
         </div>
       )}
+
+      {/* US-10: Modal Từ Chối Đơn Đặt Xe */}
+      <RejectBookingModal
+        booking={rejectingBooking}
+        isOpen={Boolean(rejectingBooking)}
+        onClose={() => setRejectingBooking(null)}
+        onConfirm={handleConfirmReject}
+        loading={rejectLoading}
+      />
+
+      {/* US-12: Modal Xem Hợp Đồng Thuê Xe Điện Tử */}
+      <RentalContractModal
+        contract={viewingContract}
+        isOpen={Boolean(viewingContract)}
+        onClose={() => setViewingContract(null)}
+      />
     </div>
   );
 }

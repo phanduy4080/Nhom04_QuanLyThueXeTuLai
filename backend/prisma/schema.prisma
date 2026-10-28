@@ -1110,6 +1110,13 @@ model Booking {
   additionalDriverLicenseBack String? @map("additional_driver_license_back")
   additionalDriverEligibility Json? @map("additional_driver_eligibility")
   additionalDriverFee Decimal @default(0) @map("additional_driver_fee") @db.Decimal(15, 2)
+  contractNumber  String?   @map("contract_number") @db.VarChar(50)
+  contractCreatedAt DateTime? @map("contract_created_at") @db.Timestamptz(6)
+  contractSignedAt DateTime? @map("contract_signed_at") @db.Timestamptz(6)
+  contractTerms   Json?     @map("contract_terms")
+  depositPaidAt   DateTime? @map("deposit_paid_at") @db.Timestamptz(6)
+  depositTransactionRef String? @map("deposit_transaction_ref") @db.VarChar(100)
+  rejectionReason String?   @map("rejection_reason")
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 

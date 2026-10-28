@@ -54,6 +54,13 @@ CREATE TABLE IF NOT EXISTS booking.bookings (
     additional_driver_license_back TEXT NULL,
     additional_driver_eligibility JSONB NULL,
     additional_driver_fee NUMERIC(15, 2) DEFAULT 0,
+    contract_number VARCHAR(50) NULL,
+    contract_created_at TIMESTAMPTZ NULL,
+    contract_signed_at TIMESTAMPTZ NULL,
+    contract_terms JSONB NULL,
+    deposit_paid_at TIMESTAMPTZ NULL,
+    deposit_transaction_ref VARCHAR(100) NULL,
+    rejection_reason TEXT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

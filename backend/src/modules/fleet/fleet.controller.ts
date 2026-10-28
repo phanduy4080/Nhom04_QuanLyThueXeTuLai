@@ -4,11 +4,13 @@ import {
   Post,
   Put,
   Patch,
+  Delete,
   Param,
   Body,
   Query,
   UseGuards,
   HttpStatus,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { FleetService } from './fleet.service';
@@ -16,6 +18,9 @@ import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { UpdateVehicleStatusDto } from './dto/update-status.dto';
 import { QueryVehiclesDto } from './dto/query-vehicles.dto';
+import { CreateModelDto } from './dto/create-model.dto';
+import { UpdateModelDto } from './dto/update-model.dto';
+import { QueryModelsDto } from './dto/query-models.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -116,6 +121,20 @@ export class FleetController {
     };
   }
 
+  @Delete('vehicles/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin/Staff: Xóa xe khỏi hệ thống (soft delete)' })
+  async deleteVehicle(@Param('id') id: string) {
+    const result = await this.fleetService.delete(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: result.message,
+      data: result,
+    };
+  }
+
   @Get('categories')
   @ApiOperation({ summary: 'Lấy danh sách các phân khúc xe (Sedan, SUV, MPV, EV...)' })
   async getCategories() {
@@ -132,11 +151,65 @@ export class FleetController {
 
   @Get('models')
   @ApiOperation({ summary: 'Lấy danh sách dòng xe' })
-  async getModels(
-    @Query('brandId') brandId?: number,
-    @Query('categoryId') categoryId?: number,
-  ) {
-    const data = await this.fleetService.getModels(brandId, categoryId);
+  async getModels(@Query() query: QueryModelsDto) {
+    const data = await this.fleetService.getModels(
+      query.brandId,
+      query.categoryId,
+      query.includeInactive,
+      query.search,
+    );
     return { statusCode: HttpStatus.OK, data };
+  }
+
+  @Get('models/:id')
+  @ApiOperation({ summary: 'Xem thông tin chi tiết một dòng xe' })
+  async getModelById(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.fleetService.getModelById(id);
+    return { statusCode: HttpStatus.OK, data };
+  }
+
+  @Post('models')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin/Staff: Thêm dòng xe mới vào hệ thống' })
+  async createModel(@Body() dto: CreateModelDto) {
+    const data = await this.fleetService.createModel(dto);
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Tạo dòng xe mới thành công',
+      data,
+    };
+  }
+
+  @Put('models/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin/Staff: Cập nhật thông tin dòng xe' })
+  async updateModel(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateModelDto,
+  ) {
+    const data = await this.fleetService.updateModel(id, dto);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Cập nhật dòng xe thành công',
+      data,
+    };
+  }
+
+  @Delete('models/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Admin/Staff: Xóa hoặc ngưng hoạt động dòng xe' })
+  async deleteModel(@Param('id', ParseIntPipe) id: number) {
+    const result = await this.fleetService.deleteModel(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: result.message,
+      data: result,
+    };
   }
 }

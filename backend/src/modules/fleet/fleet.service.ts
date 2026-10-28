@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateVehicleDto } from './dto/create-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 import { UpdateVehicleStatusDto } from './dto/update-status.dto';
 import { QueryVehiclesDto } from './dto/query-vehicles.dto';
+import { CreateModelDto } from './dto/create-model.dto';
+import { UpdateModelDto } from './dto/update-model.dto';
+import { QueryModelsDto } from './dto/query-models.dto';
 import { Prisma, VehicleStatus } from '@prisma/client';
 
 @Injectable()
@@ -519,15 +522,248 @@ export class FleetService {
     });
   }
 
-  async getModels(brandId?: number, categoryId?: number) {
-    const where: Prisma.VehicleModelWhereInput = { isActive: true };
-    if (brandId) where.brandId = brandId;
-    if (categoryId) where.categoryId = categoryId;
+  /**
+   * Quản lý dòng xe (Vehicle Models)
+   */
+  async getModels(brandId?: number, categoryId?: number, includeInactive = false, search?: string) {
+    const where: Prisma.VehicleModelWhereInput = {};
+    if (!includeInactive) where.isActive = true;
+    if (brandId) where.brandId = Number(brandId);
+    if (categoryId) where.categoryId = Number(categoryId);
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { variant: { contains: search, mode: 'insensitive' } },
+        { brand: { name: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
 
     return this.prisma.vehicleModel.findMany({
       where,
-      include: { brand: true, category: true },
-      orderBy: { name: 'asc' },
+      include: {
+        brand: true,
+        category: true,
+        _count: {
+          select: {
+            vehicles: { where: { deletedAt: null } },
+            pricePlans: true,
+          },
+        },
+      },
+      orderBy: [{ brand: { name: 'asc' } }, { name: 'asc' }],
     });
+  }
+
+  async getModelById(id: number) {
+    const model = await this.prisma.vehicleModel.findUnique({
+      where: { modelId: id },
+      include: {
+        brand: true,
+        category: true,
+        _count: {
+          select: {
+            vehicles: { where: { deletedAt: null } },
+            pricePlans: true,
+          },
+        },
+      },
+    });
+
+    if (!model) {
+      throw new NotFoundException(`Không tìm thấy dòng xe với mã ID: ${id}`);
+    }
+
+    return model;
+  }
+
+  async createModel(dto: CreateModelDto) {
+    const [brand, category] = await Promise.all([
+      this.prisma.brand.findUnique({ where: { brandId: dto.brandId } }),
+      this.prisma.vehicleCategory.findUnique({ where: { categoryId: dto.categoryId } }),
+    ]);
+
+    if (!brand) {
+      throw new BadRequestException(`Không tìm thấy hãng xe với mã ID: ${dto.brandId}`);
+    }
+    if (!category) {
+      throw new BadRequestException(`Không tìm thấy phân khúc xe với mã ID: ${dto.categoryId}`);
+    }
+
+    const existing = await this.prisma.vehicleModel.findFirst({
+      where: {
+        brandId: dto.brandId,
+        name: dto.name,
+        variant: dto.variant || '',
+        transmission: dto.transmission,
+        fuelType: dto.fuelType,
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `Dòng xe "${brand.name} ${dto.name} (${dto.variant || 'Tiêu chuẩn'})" đã tồn tại trong hệ thống`,
+      );
+    }
+
+    return this.prisma.vehicleModel.create({
+      data: {
+        brandId: dto.brandId,
+        categoryId: dto.categoryId,
+        name: dto.name,
+        variant: dto.variant || '',
+        seats: dto.seats,
+        doors: dto.doors,
+        transmission: dto.transmission,
+        fuelType: dto.fuelType,
+        engineCc: dto.engineCc,
+        powerHp: dto.powerHp,
+        fuelTankLiters: dto.fuelTankLiters ? new Prisma.Decimal(dto.fuelTankLiters) : null,
+        batteryKwh: dto.batteryKwh ? new Prisma.Decimal(dto.batteryKwh) : null,
+        evRangeKm: dto.evRangeKm,
+        trunkLiters: dto.trunkLiters,
+        fuelConsumptionL100km: dto.fuelConsumptionL100km
+          ? new Prisma.Decimal(dto.fuelConsumptionL100km)
+          : null,
+        launchYear: dto.launchYear,
+        isActive: dto.isActive !== undefined ? dto.isActive : true,
+      },
+      include: {
+        brand: true,
+        category: true,
+      },
+    });
+  }
+
+  async updateModel(id: number, dto: UpdateModelDto) {
+    const model = await this.prisma.vehicleModel.findUnique({
+      where: { modelId: id },
+    });
+
+    if (!model) {
+      throw new NotFoundException(`Không tìm thấy dòng xe với mã ID: ${id}`);
+    }
+
+    if (dto.brandId) {
+      const brand = await this.prisma.brand.findUnique({ where: { brandId: dto.brandId } });
+      if (!brand) throw new BadRequestException(`Không tìm thấy hãng xe ID ${dto.brandId}`);
+    }
+
+    if (dto.categoryId) {
+      const category = await this.prisma.vehicleCategory.findUnique({
+        where: { categoryId: dto.categoryId },
+      });
+      if (!category) throw new BadRequestException(`Không tìm thấy phân khúc xe ID ${dto.categoryId}`);
+    }
+
+    return this.prisma.vehicleModel.update({
+      where: { modelId: id },
+      data: {
+        brandId: dto.brandId,
+        categoryId: dto.categoryId,
+        name: dto.name,
+        variant: dto.variant !== undefined ? dto.variant : undefined,
+        seats: dto.seats,
+        doors: dto.doors !== undefined ? dto.doors : undefined,
+        transmission: dto.transmission,
+        fuelType: dto.fuelType,
+        engineCc: dto.engineCc !== undefined ? dto.engineCc : undefined,
+        powerHp: dto.powerHp !== undefined ? dto.powerHp : undefined,
+        fuelTankLiters:
+          dto.fuelTankLiters !== undefined
+            ? dto.fuelTankLiters
+              ? new Prisma.Decimal(dto.fuelTankLiters)
+              : null
+            : undefined,
+        batteryKwh:
+          dto.batteryKwh !== undefined
+            ? dto.batteryKwh
+              ? new Prisma.Decimal(dto.batteryKwh)
+              : null
+            : undefined,
+        evRangeKm: dto.evRangeKm !== undefined ? dto.evRangeKm : undefined,
+        trunkLiters: dto.trunkLiters !== undefined ? dto.trunkLiters : undefined,
+        fuelConsumptionL100km:
+          dto.fuelConsumptionL100km !== undefined
+            ? dto.fuelConsumptionL100km
+              ? new Prisma.Decimal(dto.fuelConsumptionL100km)
+              : null
+            : undefined,
+        launchYear: dto.launchYear !== undefined ? dto.launchYear : undefined,
+        isActive: dto.isActive !== undefined ? dto.isActive : undefined,
+      },
+      include: {
+        brand: true,
+        category: true,
+        _count: {
+          select: {
+            vehicles: { where: { deletedAt: null } },
+            pricePlans: true,
+          },
+        },
+      },
+    });
+  }
+
+  async deleteModel(id: number) {
+    const model = await this.prisma.vehicleModel.findUnique({
+      where: { modelId: id },
+      include: {
+        _count: {
+          select: {
+            vehicles: { where: { deletedAt: null } },
+            pricePlans: true,
+          },
+        },
+      },
+    });
+
+    if (!model) {
+      throw new NotFoundException(`Không tìm thấy dòng xe với mã ID: ${id}`);
+    }
+
+    if (model._count.vehicles > 0 || model._count.pricePlans > 0) {
+      await this.prisma.vehicleModel.update({
+        where: { modelId: id },
+        data: { isActive: false },
+      });
+      return {
+        success: true,
+        action: 'DEACTIVATED',
+        message: `Dòng xe đang có ${model._count.vehicles} xe và ${model._count.pricePlans} bảng giá liên kết. Hệ thống đã chuyển sang trạng thái "Ngưng hoạt động".`,
+      };
+    }
+
+    await this.prisma.vehicleModel.delete({
+      where: { modelId: id },
+    });
+
+    return {
+      success: true,
+      action: 'DELETED',
+      message: 'Đã xóa hoàn toàn dòng xe khỏi hệ thống.',
+    };
+  }
+
+  /**
+   * Xóa xe (Soft delete)
+   */
+  async delete(id: string) {
+    const vehicleId = BigInt(id);
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { vehicleId },
+    });
+    if (!vehicle || vehicle.deletedAt) {
+      throw new NotFoundException(`Không tìm thấy xe với ID: ${id}`);
+    }
+
+    await this.prisma.vehicle.update({
+      where: { vehicleId },
+      data: {
+        deletedAt: new Date(),
+        status: 'SUSPENDED',
+      },
+    });
+
+    return { success: true, message: 'Đã xóa xe khỏi đội xe thành công' };
   }
 }

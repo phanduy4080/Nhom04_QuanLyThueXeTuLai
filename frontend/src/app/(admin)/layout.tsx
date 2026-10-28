@@ -19,6 +19,9 @@ import {
   Menu,
   X,
   Sparkles,
+  Layers,
+  MapPin,
+  Building2,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toast } from 'sonner';
@@ -50,6 +53,16 @@ export default function AdminLayout({
       name: 'Quản Lý Đội Xe & Giá',
       href: '/admin/cars',
       icon: <Car className="w-5 h-5" />,
+    },
+    {
+      name: 'Dòng Xe (Model)',
+      href: '/admin/models',
+      icon: <Layers className="w-5 h-5" />,
+    },
+    {
+      name: 'Chi Nhánh & Trạm Xe',
+      href: '/admin/branches',
+      icon: <MapPin className="w-5 h-5" />,
     },
     {
       name: 'Quản Lý Đặt Xe',

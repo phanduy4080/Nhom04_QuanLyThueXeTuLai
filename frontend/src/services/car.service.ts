@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/api/axios';
-import { ApiResponse, Car, CarFilterParams } from '@/types';
+import { ApiResponse, Car, CarFilterParams, VehicleModel, Branch, Brand, VehicleCategory } from '@/types';
 
 export interface VehicleStatusUpdatePayload {
   status: string;
@@ -51,6 +51,16 @@ export const carService = {
   },
 
   /**
+   * Admin/Staff: Xóa xe (Soft delete)
+   */
+  async deleteCar(id: string): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    const response = await apiClient.delete<ApiResponse<{ success: boolean; message: string }>>(
+      `/fleet/vehicles/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
    * US-02 (Admin/Staff): Cập nhật trạng thái xe & lịch sử
    */
   async updateCarStatus(id: string, payload: VehicleStatusUpdatePayload): Promise<ApiResponse<Car>> {
@@ -59,25 +69,89 @@ export const carService = {
   },
 
   /**
-   * Lấy danh mục, hãng và dòng xe
+   * Lấy danh mục, hãng xe
    */
-  async getCategories() {
-    const response = await apiClient.get('/fleet/categories');
+  async getCategories(): Promise<ApiResponse<VehicleCategory[]>> {
+    const response = await apiClient.get<ApiResponse<VehicleCategory[]>>('/fleet/categories');
     return response.data;
   },
 
-  async getBrands() {
-    const response = await apiClient.get('/fleet/brands');
+  async getBrands(): Promise<ApiResponse<Brand[]>> {
+    const response = await apiClient.get<ApiResponse<Brand[]>>('/fleet/brands');
     return response.data;
   },
 
-  async getModels(brandId?: number, categoryId?: number) {
-    const response = await apiClient.get('/fleet/models', { params: { brandId, categoryId } });
+  /**
+   * ==========================================
+   * QUẢN LÝ DÒNG XE (VEHICLE MODELS)
+   * ==========================================
+   */
+  async getModels(params?: {
+    brandId?: number;
+    categoryId?: number;
+    includeInactive?: boolean;
+    search?: string;
+  }): Promise<ApiResponse<VehicleModel[]>> {
+    const response = await apiClient.get<ApiResponse<VehicleModel[]>>('/fleet/models', { params });
     return response.data;
   },
 
-  async getBranches() {
-    const response = await apiClient.get('/org/branches');
+  async getModelById(id: number): Promise<ApiResponse<VehicleModel>> {
+    const response = await apiClient.get<ApiResponse<VehicleModel>>(`/fleet/models/${id}`);
+    return response.data;
+  },
+
+  async createModel(data: Record<string, unknown>): Promise<ApiResponse<VehicleModel>> {
+    const response = await apiClient.post<ApiResponse<VehicleModel>>('/fleet/models', data);
+    return response.data;
+  },
+
+  async updateModel(id: number, data: Record<string, unknown>): Promise<ApiResponse<VehicleModel>> {
+    const response = await apiClient.put<ApiResponse<VehicleModel>>(`/fleet/models/${id}`, data);
+    return response.data;
+  },
+
+  async deleteModel(id: number): Promise<ApiResponse<{ success: boolean; message: string; action: string }>> {
+    const response = await apiClient.delete<ApiResponse<{ success: boolean; message: string; action: string }>>(
+      `/fleet/models/${id}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * ==========================================
+   * QUẢN LÝ CHI NHÁNH & TRẠM XE (BRANCHES)
+   * ==========================================
+   */
+  async getBranches(params?: {
+    includeInactive?: boolean;
+    search?: string;
+    province?: string;
+  }): Promise<ApiResponse<Branch[]>> {
+    const response = await apiClient.get<ApiResponse<Branch[]>>('/org/branches', { params });
+    return response.data;
+  },
+
+  async getBranchById(id: number): Promise<ApiResponse<Branch>> {
+    const response = await apiClient.get<ApiResponse<Branch>>(`/org/branches/${id}`);
+    return response.data;
+  },
+
+  async createBranch(data: Record<string, unknown>): Promise<ApiResponse<Branch>> {
+    const response = await apiClient.post<ApiResponse<Branch>>('/org/branches', data);
+    return response.data;
+  },
+
+  async updateBranch(id: number, data: Record<string, unknown>): Promise<ApiResponse<Branch>> {
+    const response = await apiClient.put<ApiResponse<Branch>>(`/org/branches/${id}`, data);
+    return response.data;
+  },
+
+  async deleteBranch(id: number): Promise<ApiResponse<{ success: boolean; message: string; action: string }>> {
+    const response = await apiClient.delete<ApiResponse<{ success: boolean; message: string; action: string }>>(
+      `/org/branches/${id}`,
+    );
     return response.data;
   },
 };
+

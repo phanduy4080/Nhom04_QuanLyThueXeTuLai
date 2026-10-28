@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Car as CarIcon,
   Plus,
@@ -19,6 +20,9 @@ import {
   UploadCloud,
   Star,
   Loader2,
+  Layers,
+  MapPin,
+  ExternalLink,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
@@ -47,7 +51,9 @@ export default function AdminCarsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedCar, setSelectedCar] = useState<any>(null);
+  const [deletingCar, setDeletingCar] = useState(false);
 
   // Status Change Form
   const [newStatus, setNewStatus] = useState('AVAILABLE');
@@ -139,6 +145,26 @@ export default function AdminCarsPage() {
       toast.error(err.response?.data?.message || 'Lỗi cập nhật trạng thái xe');
     } finally {
       setStatusSubmitting(false);
+    }
+  };
+
+  const handleOpenDeleteModal = (car: any) => {
+    setSelectedCar(car);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDeleteCar = async () => {
+    if (!selectedCar) return;
+    try {
+      setDeletingCar(true);
+      await carService.deleteCar(selectedCar.id);
+      toast.success(`Đã xóa xe biển số ${selectedCar.licensePlate} thành công!`);
+      setShowDeleteModal(false);
+      fetchCars();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi xóa xe');
+    } finally {
+      setDeletingCar(false);
     }
   };
 
@@ -354,37 +380,57 @@ export default function AdminCarsPage() {
         </div>
       </div>
 
-      {/* Tabs Switcher */}
-      <div className="flex border-b border-slate-200 mb-6 gap-6">
-        <button
-          onClick={() => setActiveTab('fleet')}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
-            activeTab === 'fleet'
-              ? 'border-amber-500 text-amber-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <CarIcon className="w-4 h-4" />
-          <span>Danh Sách Xe</span>
-          <span className="px-2 py-0.5 text-xs bg-slate-100 text-slate-700 rounded-full font-bold">
-            {cars.length}
-          </span>
-        </button>
+      {/* Tabs Switcher & Quick Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200/80 mb-6 gap-4">
+        <div className="flex gap-6">
+          <button
+            onClick={() => setActiveTab('fleet')}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+              activeTab === 'fleet'
+                ? 'border-amber-500 text-slate-900 font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <CarIcon className="w-4 h-4 text-slate-500" />
+            <span>Danh sách xe</span>
+            <span className="px-1.5 py-0.5 text-[11px] bg-slate-100 text-slate-600 rounded-md font-medium">
+              {cars.length}
+            </span>
+          </button>
 
-        <button
-          onClick={() => setActiveTab('pricing')}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
-            activeTab === 'pricing'
-              ? 'border-amber-500 text-amber-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <DollarSign className="w-4 h-4" />
-          <span>Bảng Giá & Chính Sách</span>
-          <span className="px-2 py-0.5 text-xs bg-slate-100 text-slate-700 rounded-full font-bold">
-            {pricePlans.length}
-          </span>
-        </button>
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+              activeTab === 'pricing'
+                ? 'border-amber-500 text-slate-900 font-bold'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <DollarSign className="w-4 h-4 text-slate-500" />
+            <span>Bảng giá & Chính sách</span>
+            <span className="px-1.5 py-0.5 text-[11px] bg-slate-100 text-slate-600 rounded-md font-medium">
+              {pricePlans.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Quick Links to Models and Branches */}
+        <div className="flex items-center gap-2 pb-2">
+          <Link
+            href="/admin/models"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200/80 bg-white"
+          >
+            <Layers className="w-3.5 h-3.5 text-slate-500" />
+            <span>Dòng xe ({models.length})</span>
+          </Link>
+          <Link
+            href="/admin/branches"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors border border-slate-200/80 bg-white"
+          >
+            <MapPin className="w-3.5 h-3.5 text-slate-500" />
+            <span>Trạm xe ({branches.length})</span>
+          </Link>
+        </div>
       </div>
 
       {activeTab === 'fleet' ? (
@@ -556,6 +602,14 @@ export default function AdminCarsPage() {
                             >
                               <Edit3 className="w-4 h-4" />
                             </button>
+
+                            <button
+                              onClick={() => handleOpenDeleteModal(car)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer border border-transparent hover:border-rose-100"
+                              title="Xóa xe khỏi đội xe"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -719,36 +773,78 @@ export default function AdminCarsPage() {
             <form id="car-form" onSubmit={handleSaveCar} className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-4">
               {/* Section 1: Thông tin cơ bản */}
               <div className="space-y-3">
-                <span className="text-[11px] font-black uppercase text-amber-700 tracking-wider block">
+                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider block">
                   1. Thông tin phương tiện & Chi nhánh
                 </span>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Dòng Xe (Model) <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Dòng xe (Model) <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={fetchMetadata}
+                          className="text-[11px] text-slate-400 hover:text-slate-700 flex items-center gap-0.5"
+                          title="Tải lại danh sách"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" />
+                        </button>
+                        <Link
+                          href="/admin/models"
+                          target="_blank"
+                          className="text-[11px] font-medium text-slate-500 hover:text-amber-600 transition-colors flex items-center gap-0.5"
+                          title="Mở quản lý dòng xe"
+                        >
+                          <Layers className="w-3 h-3" />
+                          <span>+ Quản lý dòng xe</span>
+                        </Link>
+                      </div>
+                    </div>
                     <select
                       value={formData.modelId}
                       onChange={(e) => setFormData({ ...formData, modelId: Number(e.target.value) })}
-                      className="w-full h-10 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400 font-medium"
+                      className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800"
                     >
                       {models.map((m) => (
                         <option key={m.modelId} value={m.modelId}>
-                          {m.brand?.name} {m.name} ({m.variant})
+                          {m.brand?.name} {m.name} ({m.variant || 'Tiêu chuẩn'})
                         </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Chi Nhánh Trạm Xe <span className="text-rose-500">*</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold text-slate-700">
+                        Chi nhánh trạm xe <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={fetchMetadata}
+                          className="text-[11px] text-slate-400 hover:text-slate-700 flex items-center gap-0.5"
+                          title="Tải lại danh sách"
+                        >
+                          <RefreshCw className="w-2.5 h-2.5" />
+                        </button>
+                        <Link
+                          href="/admin/branches"
+                          target="_blank"
+                          className="text-[11px] font-medium text-slate-500 hover:text-amber-600 transition-colors flex items-center gap-0.5"
+                          title="Mở quản lý trạm xe"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          <span>+ Quản lý trạm xe</span>
+                        </Link>
+                      </div>
+                    </div>
                     <select
                       value={formData.currentBranchId}
                       onChange={(e) => setFormData({ ...formData, currentBranchId: Number(e.target.value) })}
-                      className="w-full h-10 px-3 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400 font-medium"
+                      className="w-full h-9 px-2.5 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-amber-400 font-medium text-slate-800"
                     >
                       {branches.map((b) => (
                         <option key={b.branchId} value={b.branchId}>
@@ -995,6 +1091,55 @@ export default function AdminCarsPage() {
                 isLoading={loading}
               >
                 {showEditModal ? 'Lưu Thay Đổi' : 'Tạo Xe Mới'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Xác Nhận Xóa Xe */}
+      {showDeleteModal && selectedCar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100">
+            <div className="flex items-center gap-3 text-rose-600 mb-3">
+              <div className="p-2.5 rounded-2xl bg-rose-50">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-black text-slate-900">Xác Nhận Xóa Xe Khỏi Đội</h3>
+            </div>
+
+            <p className="text-sm text-slate-600 mb-4">
+              Bạn có chắc chắn muốn xóa xe biển số{' '}
+              <span className="font-bold text-slate-900">&ldquo;{selectedCar.licensePlate}&rdquo;</span> (Mã:{' '}
+              {selectedCar.assetCode || 'N/A'})?
+            </p>
+
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1 mb-5">
+              <div className="font-bold flex items-center gap-1.5">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+                <span>Thao tác xóa an toàn (Soft Delete)</span>
+              </div>
+              <p className="text-slate-600">
+                Xe sẽ được gỡ khỏi danh sách cho thuê trên website khách hàng nhưng vẫn lưu giữ trong lịch sử đơn đặt và hồ sơ bảo dưỡng xe.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deletingCar}
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                variant="danger"
+                size="md"
+                onClick={handleConfirmDeleteCar}
+                isLoading={deletingCar}
+              >
+                Xác Nhận Xóa
               </Button>
             </div>
           </div>

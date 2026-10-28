@@ -27,7 +27,7 @@ export interface AuthState {
 // ==========================================
 export type CarStatus = 'AVAILABLE' | 'RENTED' | 'MAINTENANCE' | 'RESERVED';
 export type TransmissionType = 'AUTOMATIC' | 'MANUAL';
-export type FuelType = 'GASOLINE' | 'DIESEL' | 'ELECTRIC' | 'HYBRID';
+export type FuelType = 'GASOLINE' | 'DIESEL' | 'ELECTRIC' | 'HYBRID' | 'PLUGIN_HYBRID' | 'LPG';
 
 export interface Category {
   id: string;
@@ -127,6 +127,85 @@ export interface HandoverRecord {
   checkOutNotes?: string;
   extraFee: number;
   completedAt?: string;
+}
+
+// ==========================================
+// Fleet & Org Management Types
+// ==========================================
+export interface Brand {
+  brandId: number;
+  name: string;
+  country?: string;
+  isActive: boolean;
+}
+
+export interface VehicleCategory {
+  categoryId: number;
+  code: string;
+  name: string;
+  description?: string;
+  requiredLicenseClasses?: string[];
+  sortOrder?: number;
+  isActive: boolean;
+}
+
+export interface VehicleModel {
+  modelId: number;
+  brandId: number;
+  categoryId: number;
+  name: string;
+  variant: string;
+  seats: number;
+  doors?: number;
+  transmission: TransmissionType;
+  fuelType: FuelType;
+  engineCc?: number;
+  powerHp?: number;
+  fuelTankLiters?: number;
+  batteryKwh?: number;
+  evRangeKm?: number;
+  trunkLiters?: number;
+  fuelConsumptionL100km?: number;
+  launchYear?: number;
+  isActive: boolean;
+  createdAt?: string;
+  brand?: Brand;
+  category?: VehicleCategory;
+  _count?: {
+    vehicles: number;
+    pricePlans?: number;
+  };
+}
+
+export interface BranchHour {
+  branchId: number;
+  dayOfWeek: number;
+  openTime?: string;
+  closeTime?: string;
+  isClosed: boolean;
+}
+
+export interface Branch {
+  branchId: number;
+  code: string;
+  name: string;
+  addressLine: string;
+  ward?: string;
+  district?: string;
+  province: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  email?: string;
+  isPickupPoint: boolean;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  branchHours?: BranchHour[];
+  _count?: {
+    vehicles: number;
+    bookingsPickup?: number;
+  };
 }
 
 // ==========================================

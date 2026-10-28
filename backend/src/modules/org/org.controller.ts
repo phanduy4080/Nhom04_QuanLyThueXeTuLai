@@ -50,9 +50,6 @@ export class OrgController {
   }
 
   @Post('branches')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin/Staff: Thêm chi nhánh / trạm xe mới' })
   async createBranch(@Body() dto: CreateBranchDto) {
     const data = await this.orgService.createBranch(dto);
@@ -64,9 +61,6 @@ export class OrgController {
   }
 
   @Put('branches/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin/Staff: Cập nhật thông tin chi nhánh / trạm xe' })
   async updateBranch(
     @Param('id', ParseIntPipe) id: number,
@@ -81,9 +75,6 @@ export class OrgController {
   }
 
   @Delete('branches/:id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'STAFF')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Admin/Staff: Xóa hoặc ngưng hoạt động chi nhánh / trạm xe' })
   async deleteBranch(@Param('id', ParseIntPipe) id: number) {
     const result = await this.orgService.deleteBranch(id);

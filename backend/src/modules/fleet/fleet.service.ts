@@ -710,7 +710,7 @@ export class FleetService {
       include: {
         _count: {
           select: {
-            vehicles: { where: { deletedAt: null } },
+            vehicles: true, // Bao gồm cả xe đã xóa mềm để tránh vi phạm khóa ngoại
             pricePlans: true,
           },
         },
@@ -733,15 +733,27 @@ export class FleetService {
       };
     }
 
-    await this.prisma.vehicleModel.delete({
-      where: { modelId: id },
-    });
+    try {
+      await this.prisma.vehicleModel.delete({
+        where: { modelId: id },
+      });
 
-    return {
-      success: true,
-      action: 'DELETED',
-      message: 'Đã xóa hoàn toàn dòng xe khỏi hệ thống.',
-    };
+      return {
+        success: true,
+        action: 'DELETED',
+        message: 'Đã xóa hoàn toàn dòng xe khỏi hệ thống.',
+      };
+    } catch {
+      await this.prisma.vehicleModel.update({
+        where: { modelId: id },
+        data: { isActive: false },
+      });
+      return {
+        success: true,
+        action: 'DEACTIVATED',
+        message: 'Dòng xe có dữ liệu liên kết nên hệ thống đã chuyển sang trạng thái "Ngưng hoạt động".',
+      };
+    }
   }
 
   /**

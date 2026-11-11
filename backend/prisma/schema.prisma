@@ -293,6 +293,7 @@ model User {
   listedBlacklists        CustomerBlacklist[]        @relation("BlacklistListedBy")
   liftedBlacklists        CustomerBlacklist[]        @relation("BlacklistLiftedBy")
   reviewedExtensions      RentalExtension[]          @relation("ExtensionReviewedBy")
+  assignedIncidents       Incident[]                 @relation("IncidentAssignedStaff")
 
   @@map("users")
   @@schema("iam")
@@ -566,6 +567,7 @@ model Vehicle {
   vehiclePolicies    VehiclePolicy[]
   bookings           Booking[]
   handoverRecords    HandoverRecord[]
+  incidents          Incident[]
 
   @@index([status], map: "ix_vehicles_status")
   @@index([currentBranchId], map: "ix_vehicles_branch")
@@ -1126,6 +1128,7 @@ model Booking {
   returnBranch Branch           @relation("BookingReturnBranch", fields: [returnBranchId], references: [branchId])
   handovers    HandoverRecord[]
   extensions   RentalExtension[]
+  incidents    Incident[]
 
   @@map("bookings")
   @@schema("booking")
@@ -1175,5 +1178,94 @@ model RentalExtension {
 
   @@map("rental_extensions")
   @@schema("booking")
+}
+
+// =====================================================================
+// INCIDENT SCHEMA (Sprint 7: US-18, US-19)
+// =====================================================================
+
+enum IncidentType {
+  BREAKDOWN
+  ACCIDENT
+  LOST_ACCESSORY
+  THEFT
+  TRAFFIC_VIOLATION
+  OTHER
+
+  @@map("incident_type")
+  @@schema("incident")
+}
+
+enum IncidentStatus {
+  REPORTED
+  UNDER_REVIEW
+  INSURANCE_PROCESSING
+  ASSESSMENT
+  DISPUTED
+  RESOLVED
+  CLOSED
+
+  @@map("incident_status")
+  @@schema("incident")
+}
+
+enum LiableParty {
+  INSURER
+  COMPANY
+  CUSTOMER
+  THIRD_PARTY
+
+  @@map("liable_party")
+  @@schema("incident")
+}
+
+model Incident {
+  incidentId              BigInt         @id @default(autoincrement()) @map("incident_id")
+  incidentCode            String         @unique @map("incident_code") @db.VarChar(50)
+  bookingId               Int            @map("booking_id")
+  vehicleId               BigInt         @map("vehicle_id")
+  incidentType            IncidentType   @default(OTHER) @map("incident_type")
+  status                  IncidentStatus @default(REPORTED)
+  title                   String         @db.VarChar(255)
+  description             String
+  location                String?        @db.VarChar(255)
+  occurredAt              DateTime       @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  contactPhone            String?        @map("contact_phone") @db.VarChar(50)
+  evidencePhotos          Json?          @default("[]") @map("evidence_photos")
+
+  insuranceClaimNumber    String?        @map("insurance_claim_number") @db.VarChar(100)
+  insurerName             String?        @map("insurer_name") @db.VarChar(150)
+  insuranceAppraiser      String?        @map("insurance_appraiser") @db.VarChar(100)
+  insuranceContact        String?        @map("insurance_contact") @db.VarChar(50)
+  insuranceStatus         String         @default("NOT_SUBMITTED") @map("insurance_status") @db.VarChar(50)
+  insuranceNotes          String?        @map("insurance_notes")
+
+  totalDamageCost         Decimal        @default(0) @map("total_damage_cost") @db.Decimal(15, 2)
+  insuranceCoverageAmount Decimal        @default(0) @map("insurance_coverage_amount") @db.Decimal(15, 2)
+  companyShareAmount      Decimal        @default(0) @map("company_share_amount") @db.Decimal(15, 2)
+  customerShareAmount     Decimal        @default(0) @map("customer_share_amount") @db.Decimal(15, 2)
+  deductedFromDeposit     Decimal        @default(0) @map("deducted_from_deposit") @db.Decimal(15, 2)
+  customerPaymentStatus   String         @default("PENDING") @map("customer_payment_status") @db.VarChar(50)
+  liabilityParty          LiableParty?   @default(CUSTOMER) @map("liability_party")
+  liabilityNotes          String?        @map("liability_notes")
+  resolutionNotes         String?        @map("resolution_notes")
+
+  reportedByName          String?        @map("reported_by_name") @db.VarChar(100)
+  reportedByPhone         String?        @map("reported_by_phone") @db.VarChar(50)
+  reportedAt              DateTime       @default(now()) @map("reported_at") @db.Timestamptz(6)
+  assignedStaffId         BigInt?        @map("assigned_staff_id")
+  resolvedAt              DateTime?      @map("resolved_at") @db.Timestamptz(6)
+  createdAt               DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  booking       Booking  @relation(fields: [bookingId], references: [bookingId], onDelete: Cascade)
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [vehicleId], onDelete: Cascade)
+  assignedStaff User?    @relation("IncidentAssignedStaff", fields: [assignedStaffId], references: [userId])
+
+  @@index([bookingId], map: "ix_incidents_booking")
+  @@index([vehicleId], map: "ix_incidents_vehicle")
+  @@index([status], map: "ix_incidents_status")
+  @@map("incidents")
+  @@schema("incident")
 }
 

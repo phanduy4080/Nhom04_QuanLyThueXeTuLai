@@ -416,3 +416,4 @@ export const RentalExtensionModal: React.FC<RentalExtensionModalProps> = ({
     </div>
   );
 };
+

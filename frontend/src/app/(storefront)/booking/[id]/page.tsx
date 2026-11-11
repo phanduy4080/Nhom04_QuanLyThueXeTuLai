@@ -27,15 +27,18 @@ import {
   AlertCircle,
   CalendarPlus,
   Sparkles,
+  ShieldAlert,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { carService } from '@/services/car.service';
 import { bookingService } from '@/services/booking.service';
+import { incidentService, IncidentItem } from '@/services/incident.service';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { DepositPaymentModal } from '@/components/booking/DepositPaymentModal';
 import { RentalContractModal } from '@/components/booking/RentalContractModal';
 import { RentalExtensionModal } from '@/components/booking/RentalExtensionModal';
+import { ReportIncidentModal } from '@/components/incident/ReportIncidentModal';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -59,6 +62,25 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
 
   // US-16 & US-17: Modal gia hạn thời gian thuê xe
   const [showExtensionModal, setShowExtensionModal] = useState(false);
+
+  // US-18 & US-19: Sự cố & Bảo hiểm
+  const [showIncidentModal, setShowIncidentModal] = useState(false);
+  const [incidents, setIncidents] = useState<IncidentItem[]>([]);
+  const [loadingIncidents, setLoadingIncidents] = useState(false);
+
+  const fetchIncidents = async () => {
+    try {
+      setLoadingIncidents(true);
+      const res = await incidentService.getIncidentsByBooking(bookingCode);
+      if (res?.data) {
+        setIncidents(res.data);
+      }
+    } catch {
+      // Ignored
+    } finally {
+      setLoadingIncidents(false);
+    }
+  };
 
   const handleOpenContract = async () => {
     try {
@@ -131,6 +153,7 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
           const carRes = await carService.getCarById(String(b.carId));
           if (carRes.data) setCar(carRes.data);
         }
+        fetchIncidents();
       }
     } catch (err) {
       console.error(err);
@@ -261,6 +284,19 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               leftIcon={<CalendarPlus className="w-4 h-4 text-amber-300" />}
             >
               Gia Hạn Thuê (US-16)
+            </Button>
+          )}
+
+          {/* US-18: Nút Báo Cáo Sự Cố Xe */}
+          {['CONFIRMED', 'IN_RENTAL', 'COMPLETED'].includes(b?.status) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowIncidentModal(true)}
+              className="border-rose-300 text-rose-800 bg-rose-50/70 hover:bg-rose-100 font-bold"
+              leftIcon={<ShieldAlert className="w-4 h-4 text-rose-600" />}
+            >
+              Báo Sự Cố (US-18)
             </Button>
           )}
 
@@ -421,6 +457,40 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               className="bg-teal-700 hover:bg-teal-800 text-white font-bold shrink-0 shadow-xs"
             >
               {b?.hasActiveExtension ? 'Gia Hạn Thêm Lần Nữa' : 'Gia Hạn Thuê Xe'}
+            </Button>
+          </div>
+        )}
+
+        {/* Banner 5: Sự cố phát sinh trong chuyến đi (US-18 & US-19) */}
+        {incidents.length > 0 && (
+          <div className="px-6 py-4 bg-rose-50 border-b border-rose-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-600 text-white shrink-0 shadow-xs">
+                <ShieldAlert className="w-6 h-6 text-amber-300" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <strong className="text-sm font-black text-rose-950">
+                    Đơn thuê đang có {incidents.length} sự cố được ghi nhận
+                  </strong>
+                  <span className="text-[10px] font-mono font-bold bg-rose-200 text-rose-900 px-2 py-0.5 rounded">
+                    {incidents[0].status}
+                  </span>
+                </div>
+                <p className="text-rose-800 mt-0.5">
+                  Sự cố gần nhất: <strong>{incidents[0].title}</strong> • Trạng thái: {incidents[0].status}
+                  {incidents[0].customerShareAmount > 0 && ` • Trách nhiệm bồi hoàn của khách: ${formatCurrency(incidents[0].customerShareAmount)}`}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowIncidentModal(true)}
+              className="border-rose-300 bg-white hover:bg-rose-100 text-rose-900 font-bold shrink-0 shadow-2xs"
+            >
+              Báo Thêm Sự Cố (US-18)
             </Button>
           </div>
         )}
@@ -1044,6 +1114,16 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         onClose={() => setShowExtensionModal(false)}
         onSuccess={(updated) => {
           setBookingData(updated);
+        }}
+      />
+
+      {/* US-18: Modal Báo Cáo Sự Cố Xe */}
+      <ReportIncidentModal
+        booking={b}
+        isOpen={showIncidentModal}
+        onClose={() => setShowIncidentModal(false)}
+        onSuccess={() => {
+          fetchIncidents();
         }}
       />
     </div>

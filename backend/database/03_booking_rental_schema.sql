@@ -101,6 +101,48 @@ CREATE TABLE IF NOT EXISTS booking.rental_extensions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Bảng Quản lý sự cố & Bồi thường bảo hiểm (incident.incidents - Sprint 7: US-18, US-19)
+CREATE TABLE IF NOT EXISTS incident.incidents (
+    incident_id BIGSERIAL PRIMARY KEY,
+    incident_code VARCHAR(50) UNIQUE NOT NULL,
+    booking_id INT NOT NULL REFERENCES booking.bookings(booking_id) ON DELETE CASCADE,
+    vehicle_id BIGINT NOT NULL REFERENCES fleet.vehicles(vehicle_id) ON DELETE CASCADE,
+    incident_type incident.incident_type NOT NULL DEFAULT 'OTHER',
+    status incident.incident_status NOT NULL DEFAULT 'REPORTED',
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    location VARCHAR(255),
+    occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    contact_phone VARCHAR(50),
+    evidence_photos JSONB DEFAULT '[]'::jsonb,
+    insurance_claim_number VARCHAR(100),
+    insurer_name VARCHAR(150),
+    insurance_appraiser VARCHAR(100),
+    insurance_contact VARCHAR(50),
+    insurance_status VARCHAR(50) DEFAULT 'NOT_SUBMITTED',
+    insurance_notes TEXT,
+    total_damage_cost NUMERIC(15,2) DEFAULT 0,
+    insurance_coverage_amount NUMERIC(15,2) DEFAULT 0,
+    company_share_amount NUMERIC(15,2) DEFAULT 0,
+    customer_share_amount NUMERIC(15,2) DEFAULT 0,
+    deducted_from_deposit NUMERIC(15,2) DEFAULT 0,
+    customer_payment_status VARCHAR(50) DEFAULT 'PENDING',
+    liability_party incident.liable_party DEFAULT 'CUSTOMER',
+    liability_notes TEXT,
+    resolution_notes TEXT,
+    reported_by_name VARCHAR(100),
+    reported_by_phone VARCHAR(50),
+    reported_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    assigned_staff_id BIGINT REFERENCES iam.users(user_id) ON DELETE SET NULL,
+    resolved_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ix_incidents_booking ON incident.incidents(booking_id);
+CREATE INDEX IF NOT EXISTS ix_incidents_vehicle ON incident.incidents(vehicle_id);
+CREATE INDEX IF NOT EXISTS ix_incidents_status ON incident.incidents(status);
+
 -- Dữ liệu mẫu khởi tạo cho Bookings
 INSERT INTO booking.bookings (
     booking_code, customer_name, phone, email, id_number, license_number,

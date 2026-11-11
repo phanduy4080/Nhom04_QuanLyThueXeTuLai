@@ -104,7 +104,7 @@ export default function AdminMaintenancePage() {
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng Đội Xe</p>
           <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
             {data?.summary.totalVehicles || 0}
@@ -114,40 +114,40 @@ export default function AdminMaintenancePage() {
 
         <div
           onClick={() => setFilterSeverity('CRITICAL')}
-          className="bg-white p-4 rounded-xl border border-red-200 shadow-xs cursor-pointer hover:border-red-300 transition"
+          className="bg-white p-4 rounded-xl border border-rose-200 shadow-xs cursor-pointer hover:border-rose-300 transition"
         >
-          <p className="text-xs font-medium text-red-600 uppercase tracking-wider">Cảnh Báo Nguy Cấp</p>
-          <h3 className="text-2xl font-bold text-red-600 mt-1 tracking-tight">
+          <p className="text-xs font-medium text-rose-700 uppercase tracking-wider">Cảnh Báo Nguy Cấp</p>
+          <h3 className="text-2xl font-bold text-rose-700 mt-1 tracking-tight">
             {data?.summary.criticalAlerts || 0}
           </h3>
-          <p className="text-xs text-red-500 mt-1">Hạn &le; 7 ngày hoặc &le; 300 km</p>
+          <p className="text-xs text-rose-600 mt-1">Hạn &le; 7 ngày hoặc &le; 300 km</p>
         </div>
 
         <div
           onClick={() => setFilterSeverity('WARNING')}
           className="bg-white p-4 rounded-xl border border-amber-200 shadow-xs cursor-pointer hover:border-amber-300 transition"
         >
-          <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">Cần Lưu Ý Sớm</p>
-          <h3 className="text-2xl font-bold text-amber-600 mt-1 tracking-tight">
+          <p className="text-xs font-medium text-amber-800 uppercase tracking-wider">Cần Lưu Ý Sớm</p>
+          <h3 className="text-2xl font-bold text-amber-800 mt-1 tracking-tight">
             {data?.summary.warningAlerts || 0}
           </h3>
-          <p className="text-xs text-amber-600 mt-1">Hạn &le; 30 ngày hoặc &le; 1.000 km</p>
+          <p className="text-xs text-amber-700 mt-1">Hạn &le; 30 ngày hoặc &le; 1.000 km</p>
         </div>
 
         <div
           onClick={() => setFilterSeverity('ALL')}
           className="bg-white p-4 rounded-xl border border-emerald-200 shadow-xs cursor-pointer hover:border-emerald-300 transition"
         >
-          <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider">Đội Xe An Toàn</p>
-          <h3 className="text-2xl font-bold text-emerald-600 mt-1 tracking-tight">
+          <p className="text-xs font-medium text-emerald-800 uppercase tracking-wider">Đội Xe An Toàn</p>
+          <h3 className="text-2xl font-bold text-emerald-800 mt-1 tracking-tight">
             {data?.summary.safeCount || 0}
           </h3>
-          <p className="text-xs text-emerald-600 mt-1">Bảo hiểm & bảo dưỡng đầy đủ</p>
+          <p className="text-xs text-emerald-700 mt-1">Bảo hiểm & bảo dưỡng đầy đủ</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -160,38 +160,46 @@ export default function AdminMaintenancePage() {
         </div>
 
         <div className="flex items-center space-x-2 w-full md:w-auto overflow-x-auto pb-1">
-          <Button
-            size="sm"
-            variant={filterSeverity === 'ALL' ? 'primary' : 'outline'}
+          <button
             onClick={() => setFilterSeverity('ALL')}
-            className="text-xs"
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              filterSeverity === 'ALL'
+                ? 'bg-slate-900 text-white'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
           >
             Tất cả ({data?.vehicles.length || 0})
-          </Button>
-          <Button
-            size="sm"
-            variant={filterSeverity === 'CRITICAL' ? 'danger' : 'outline'}
+          </button>
+          <button
             onClick={() => setFilterSeverity('CRITICAL')}
-            className={`text-xs ${filterSeverity === 'CRITICAL' ? 'bg-red-600 hover:bg-red-700 text-white' : 'text-red-600 border-red-200'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              filterSeverity === 'CRITICAL'
+                ? 'bg-rose-600 text-white'
+                : 'bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100'
+            }`}
           >
             Nguy cấp ({data?.summary.criticalAlerts || 0})
-          </Button>
-          <Button
-            size="sm"
-            variant={filterSeverity === 'WARNING' ? 'primary' : 'outline'}
+          </button>
+          <button
             onClick={() => setFilterSeverity('WARNING')}
-            className={`text-xs ${filterSeverity === 'WARNING' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'text-amber-700 border-amber-200'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              filterSeverity === 'WARNING'
+                ? 'bg-amber-500 text-slate-950 font-semibold'
+                : 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100'
+            }`}
           >
             Lưu ý ({data?.summary.warningAlerts || 0})
-          </Button>
-          <Button
-            size="sm"
-            variant={filterSeverity === 'INSPECTING' ? 'primary' : 'outline'}
+          </button>
+          <button
             onClick={() => setFilterSeverity('INSPECTING')}
-            className="text-xs border-indigo-200 text-indigo-700"
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              filterSeverity === 'INSPECTING'
+                ? 'bg-slate-800 text-white'
+                : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+            }`}
           >
             Đang kiểm tra/vệ sinh
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -229,7 +237,7 @@ export default function AdminMaintenancePage() {
                         <div>
                           <p className="font-bold text-slate-900">{v.carName}</p>
                           <div className="flex items-center space-x-2 mt-0.5">
-                            <span className="text-xs font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                            <span className="text-xs font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                               {v.licensePlate}
                             </span>
                             <span className="text-xs text-slate-500">{v.branchName}</span>
@@ -254,10 +262,10 @@ export default function AdminMaintenancePage() {
                           <span
                             className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full mt-1 ${
                               v.insuranceStatus === 'CRITICAL'
-                                ? 'bg-red-100 text-red-700 border border-red-200'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                 : v.insuranceStatus === 'WARNING'
-                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700'
+                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                             }`}
                           >
                             {v.daysToInsurance !== null && v.daysToInsurance <= 0
@@ -278,10 +286,10 @@ export default function AdminMaintenancePage() {
                           <span
                             className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full mt-1 ${
                               v.inspectionStatus === 'CRITICAL'
-                                ? 'bg-red-100 text-red-700 border border-red-200'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                 : v.inspectionStatus === 'WARNING'
-                                ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700'
+                                ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                             }`}
                           >
                             {v.daysToInspection !== null && v.daysToInspection <= 0
@@ -303,10 +311,10 @@ export default function AdminMaintenancePage() {
                         <span
                           className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full mt-1 ${
                             v.maintenanceStatus === 'CRITICAL'
-                              ? 'bg-red-100 text-red-700 border border-red-200 animate-pulse'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse'
                               : v.maintenanceStatus === 'WARNING'
-                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                              : 'bg-emerald-50 text-emerald-700'
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                           }`}
                         >
                           {v.kmRemaining <= 0 ? 'Đã quá hạn km!' : `Còn ${v.kmRemaining} km`}
@@ -319,12 +327,12 @@ export default function AdminMaintenancePage() {
                       <span
                         className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
                           v.status === 'AVAILABLE'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                             : v.status === 'RENTED'
-                            ? 'bg-blue-100 text-blue-800'
+                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
                             : v.status === 'INSPECTING'
-                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                            : 'bg-amber-100 text-amber-800'
+                            ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                            : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}
                       >
                         {v.status === 'AVAILABLE'
@@ -340,11 +348,10 @@ export default function AdminMaintenancePage() {
                     {/* Thao tác (US-26) */}
                     <td className="px-5 py-4 text-right">
                       {v.status === 'INSPECTING' || v.status === 'MAINTENANCE' ? (
-                        <Button
-                          size="sm"
+                        <button
                           onClick={() => handleMarkReady(v.vehicleId, v.licensePlate)}
                           disabled={actionLoading === v.vehicleId}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs"
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold rounded-md text-xs transition inline-flex items-center"
                         >
                           {actionLoading === v.vehicleId ? (
                             'Đang xử lý...'
@@ -354,7 +361,7 @@ export default function AdminMaintenancePage() {
                               Sẵn Sàng Cho Thuê (US-26)
                             </>
                           )}
-                        </Button>
+                        </button>
                       ) : (
                         <span className="text-xs text-slate-400">Đã sẵn sàng</span>
                       )}

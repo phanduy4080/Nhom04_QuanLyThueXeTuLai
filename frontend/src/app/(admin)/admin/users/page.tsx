@@ -136,15 +136,15 @@ export default function AdminUsersPage() {
 
                   <td className="py-4 px-4 whitespace-nowrap">
                     {u.role === 'ADMIN' ? (
-                      <span className="px-2.5 py-1 rounded-lg font-bold bg-purple-100 text-purple-800 border border-purple-200 inline-flex items-center gap-1 whitespace-nowrap shadow-2xs">
+                      <span className="px-2.5 py-1 rounded-lg font-bold bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center gap-1 whitespace-nowrap shadow-2xs">
                         <Shield className="w-3 h-3 shrink-0" /> ADMIN
                       </span>
                     ) : u.role === 'STAFF' ? (
-                      <span className="px-2.5 py-1 rounded-lg font-bold bg-blue-100 text-blue-800 border border-blue-200 inline-flex items-center gap-1 whitespace-nowrap shadow-2xs">
+                      <span className="px-2.5 py-1 rounded-lg font-bold bg-slate-100 text-slate-800 border border-slate-200 inline-flex items-center gap-1 whitespace-nowrap shadow-2xs">
                         <KeyRound className="w-3 h-3 shrink-0" /> STAFF
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-lg font-bold bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center gap-1 whitespace-nowrap shadow-2xs">
+                      <span className="px-2.5 py-1 rounded-lg font-medium bg-slate-100 text-slate-600 border border-slate-200 inline-flex items-center gap-1 whitespace-nowrap shadow-2xs">
                         <Users className="w-3 h-3 shrink-0" /> CUSTOMER
                       </span>
                     )}
@@ -152,11 +152,11 @@ export default function AdminUsersPage() {
 
                   <td className="py-4 px-4 whitespace-nowrap">
                     {u.verificationStatus === 'VERIFIED' ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold whitespace-nowrap border border-emerald-200 shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-medium whitespace-nowrap border border-emerald-200 shadow-2xs">
                         <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> Đã xác thực
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 font-bold whitespace-nowrap border border-amber-200 shadow-2xs">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-medium whitespace-nowrap border border-amber-200 shadow-2xs">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" /> Chờ duyệt GPLX
                       </span>
                     )}

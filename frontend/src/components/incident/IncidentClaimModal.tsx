@@ -221,7 +221,7 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
                       key={i}
                       type="button"
                       onClick={() => setSelectedPhoto(photo)}
-                      className="w-20 h-14 rounded-lg overflow-hidden border border-slate-200 shrink-0 hover:ring-2 hover:ring-indigo-500 transition-all cursor-pointer"
+                      className="w-20 h-14 rounded-lg overflow-hidden border border-slate-200 shrink-0 hover:ring-2 hover:ring-amber-500 transition-all cursor-pointer"
                     >
                       <img src={photo} alt="" className="w-full h-full object-cover" />
                     </button>
@@ -255,9 +255,9 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
           </div>
 
           {/* PHẦN 1: LÀM VIỆC VỚI BẢO HIỂM (US-19) */}
-          <div className="p-5 border-2 border-indigo-100 bg-indigo-50/30 rounded-2xl space-y-4">
-            <div className="flex items-center gap-2 text-indigo-950 font-black text-sm">
-              <Building2 className="w-4 h-4 text-indigo-600" />
+          <div className="p-5 border border-slate-200 bg-slate-50/60 rounded-xl space-y-4">
+            <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+              <Building2 className="w-4 h-4 text-slate-700" />
               <span>1. Thông Tin Giám Định & Khiếu Nại Bảo Hiểm (US-19)</span>
             </div>
 
@@ -381,7 +381,7 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
             {/* 3 Cột phân định chi phí */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-white border border-slate-200 rounded-xl text-xs">
               <div>
-                <label className="font-bold text-indigo-900 block mb-1">
+                <label className="font-bold text-slate-700 block mb-1">
                   1. Bảo hiểm chi trả:
                 </label>
                 <input
@@ -390,7 +390,7 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
                   min="0"
                   value={insuranceCoverageAmount}
                   onChange={(e) => setInsuranceCoverageAmount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-indigo-50/50 border border-indigo-200 rounded-lg font-bold text-indigo-900"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-900"
                 />
                 <span className="text-[10px] text-slate-500 mt-0.5 block">
                   {formatCurrency(insuranceCoverageAmount)}
@@ -398,7 +398,7 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
               </div>
 
               <div>
-                <label className="font-bold text-teal-900 block mb-1">
+                <label className="font-bold text-slate-700 block mb-1">
                   2. Công ty chịu:
                 </label>
                 <input
@@ -407,7 +407,7 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
                   min="0"
                   value={companyShareAmount}
                   onChange={(e) => setCompanyShareAmount(Number(e.target.value))}
-                  className="w-full px-3 py-2 bg-teal-50/50 border border-teal-200 rounded-lg font-bold text-teal-900"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-bold text-slate-900"
                 />
                 <span className="text-[10px] text-slate-500 mt-0.5 block">
                   {formatCurrency(companyShareAmount)}
@@ -511,8 +511,8 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
               variant="primary"
               size="sm"
               disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
-              leftIcon={<Save className="w-4 h-4 text-white" />}
+              className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold"
+              leftIcon={<Save className="w-4 h-4 text-slate-950" />}
             >
               {saving ? 'Đang lưu hồ sơ...' : 'Lưu Hồ Sơ & Phân Định Chi Phí (US-19)'}
             </Button>

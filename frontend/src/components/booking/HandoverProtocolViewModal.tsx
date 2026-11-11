@@ -117,7 +117,7 @@ export function HandoverProtocolViewModal({
 
               {/* Bên nhận */}
               <div className="space-y-1.5">
-                <span className="font-black uppercase text-indigo-800 text-xs block pb-1 border-b border-indigo-200">
+                <span className="font-black uppercase text-slate-800 text-xs block pb-1 border-b border-slate-200">
                   BÊN NHẬN XE (KHÁCH THUÊ XE)
                 </span>
                 <p>
@@ -133,7 +133,7 @@ export function HandoverProtocolViewModal({
                   <strong>Số GPLX:</strong> {handover.customerLicenseNumber || '---'}
                 </p>
                 {handover.hasAdditionalDriver && (
-                  <p className="text-indigo-700 font-bold pt-1">
+                  <p className="text-slate-800 font-bold pt-1">
                     * Người lái phụ: {handover.additionalDriverName} ({handover.additionalDriverPhone}) - GPLX: {handover.additionalDriverLicenseNumber}
                   </p>
                 )}
@@ -325,7 +325,7 @@ export function HandoverProtocolViewModal({
                   <p className="font-bold text-xs uppercase text-slate-900">ĐẠI DIỆN BÊN NHẬN XE</p>
                   <p className="text-[11px] text-slate-400 italic">(Ký và ghi rõ họ tên)</p>
                   <div className="h-20 flex items-center justify-center">
-                    <span className="font-serif italic font-bold text-indigo-900 text-lg">
+                    <span className="font-serif italic font-bold text-slate-900 text-lg">
                       {handover.customerName}
                     </span>
                   </div>

@@ -401,23 +401,23 @@ export default function AdminCarsPage() {
         );
       case 'RENTED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
             <span>Đang Cho Thuê</span>
           </span>
         );
       case 'BOOKED':
       case 'HELD':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap shadow-2xs">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
             <span>Đã Giữ Chỗ</span>
           </span>
         );
       case 'MAINTENANCE':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-purple-50 text-purple-700 border border-purple-200 whitespace-nowrap shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
             <span>Bảo Dưỡng</span>
           </span>
         );
@@ -430,8 +430,8 @@ export default function AdminCarsPage() {
         );
       case 'INSPECTING':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-sky-50 text-sky-700 border border-sky-200 whitespace-nowrap shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0" />
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-lg bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
             <span>Đang Kiểm Tra</span>
           </span>
         );

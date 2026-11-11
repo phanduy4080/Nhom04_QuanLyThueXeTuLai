@@ -19,6 +19,8 @@ import {
   AlertCircle,
   ExternalLink,
   KeyRound,
+  CalendarPlus,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +31,7 @@ import { RentalContractModal } from '@/components/booking/RentalContractModal';
 import { RejectBookingModal } from '@/components/booking/RejectBookingModal';
 import { HandoverInspectionModal } from '@/components/booking/HandoverInspectionModal';
 import { HandoverProtocolViewModal } from '@/components/booking/HandoverProtocolViewModal';
+import { RentalExtensionModal } from '@/components/booking/RentalExtensionModal';
 
 export default function AdminBookingsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -52,6 +55,9 @@ export default function AdminBookingsPage() {
   const [handoverBooking, setHandoverBooking] = useState<BookingResponse | null>(null);
   const [viewingHandover, setViewingHandover] = useState<HandoverRecordItem | null>(null);
   const [handoverLoading, setHandoverLoading] = useState(false);
+
+  // US-16 & US-17: Extension Modal
+  const [extendingBooking, setExtendingBooking] = useState<BookingResponse | null>(null);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -369,7 +375,14 @@ export default function AdminBookingsPage() {
                         <ArrowRight className="w-3 h-3 text-slate-400 mx-1 shrink-0" />
                         <span>{b.endDate ? new Date(b.endDate).toLocaleDateString('vi-VN') : ''}</span>
                       </p>
-                      <span className="text-slate-400">Thời lượng: {b.totalDays} ngày</span>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-slate-400">Thời lượng: {b.totalDays} ngày</span>
+                        {b.hasActiveExtension && (
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
+                            +Đã gia hạn
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-4 px-4 text-xs whitespace-nowrap">
@@ -426,6 +439,18 @@ export default function AdminBookingsPage() {
                           >
                             <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Biên Bản</span>
+                          </button>
+                        )}
+
+                        {/* US-16 & US-17: Nút Gia Hạn Thuê Xe */}
+                        {['CONFIRMED', 'IN_RENTAL'].includes(b.status) && (
+                          <button
+                            onClick={() => setExtendingBooking(b)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+                            title="Gia hạn thuê xe & Tự động duyệt lịch (US-16, US-17)"
+                          >
+                            <CalendarPlus className="w-3.5 h-3.5 text-teal-600" />
+                            <span>Gia Hạn</span>
                           </button>
                         )}
 
@@ -762,6 +787,17 @@ export default function AdminBookingsPage() {
         handover={viewingHandover}
         isOpen={Boolean(viewingHandover)}
         onClose={() => setViewingHandover(null)}
+      />
+
+      {/* US-16 & US-17: Modal Gia Hạn Thuê Xe */}
+      <RentalExtensionModal
+        booking={extendingBooking}
+        isOpen={Boolean(extendingBooking)}
+        onClose={() => setExtendingBooking(null)}
+        onSuccess={() => {
+          setExtendingBooking(null);
+          fetchBookings();
+        }}
       />
     </div>
   );

@@ -292,6 +292,7 @@ model User {
   verifiedLicenses        DriverLicense[]            @relation("LicenseVerifiedBy")
   listedBlacklists        CustomerBlacklist[]        @relation("BlacklistListedBy")
   liftedBlacklists        CustomerBlacklist[]        @relation("BlacklistLiftedBy")
+  reviewedExtensions      RentalExtension[]          @relation("ExtensionReviewedBy")
 
   @@map("users")
   @@schema("iam")
@@ -1124,6 +1125,7 @@ model Booking {
   pickupBranch Branch           @relation("BookingPickupBranch", fields: [pickupBranchId], references: [branchId])
   returnBranch Branch           @relation("BookingReturnBranch", fields: [returnBranchId], references: [branchId])
   handovers    HandoverRecord[]
+  extensions   RentalExtension[]
 
   @@map("bookings")
   @@schema("booking")
@@ -1148,5 +1150,30 @@ model HandoverRecord {
 
   @@map("handover_records")
   @@schema("rental")
+}
+
+model RentalExtension {
+  extensionId    Int       @id @default(autoincrement()) @map("extension_id")
+  extensionCode  String    @unique @map("extension_code") @db.VarChar(50)
+  bookingId      Int       @map("booking_id")
+  currentEndDate DateTime  @map("current_end_date") @db.Timestamptz(6)
+  newEndDate     DateTime  @map("new_end_date") @db.Timestamptz(6)
+  extendedDays   Int       @default(1) @map("extended_days")
+  dailyPrice     Decimal   @default(0) @map("daily_price") @db.Decimal(15, 2)
+  extraAmount    Decimal   @default(0) @map("extra_amount") @db.Decimal(15, 2)
+  reason         String?
+  status         String    @default("PENDING") @db.VarChar(50)
+  systemDecision String?   @map("system_decision") @db.VarChar(50)
+  systemNotes    String?   @map("system_notes")
+  reviewedBy     BigInt?   @map("reviewed_by")
+  reviewedAt     DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  booking  Booking @relation(fields: [bookingId], references: [bookingId], onDelete: Cascade)
+  reviewer User?   @relation("ExtensionReviewedBy", fields: [reviewedBy], references: [userId])
+
+  @@map("rental_extensions")
+  @@schema("booking")
 }
 

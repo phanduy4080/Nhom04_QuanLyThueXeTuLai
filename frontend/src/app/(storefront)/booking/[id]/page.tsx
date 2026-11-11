@@ -25,6 +25,8 @@ import {
   XCircle,
   Eye,
   AlertCircle,
+  CalendarPlus,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { carService } from '@/services/car.service';
@@ -33,6 +35,7 @@ import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { DepositPaymentModal } from '@/components/booking/DepositPaymentModal';
 import { RentalContractModal } from '@/components/booking/RentalContractModal';
+import { RentalExtensionModal } from '@/components/booking/RentalExtensionModal';
 
 export default function BookingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -53,6 +56,9 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
   const [showContractModal, setShowContractModal] = useState(false);
   const [contractData, setContractData] = useState<any>(null);
   const [contractLoading, setContractLoading] = useState(false);
+
+  // US-16 & US-17: Modal gia hạn thời gian thuê xe
+  const [showExtensionModal, setShowExtensionModal] = useState(false);
 
   const handleOpenContract = async () => {
     try {
@@ -245,6 +251,19 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
             </Button>
           )}
 
+          {/* US-16: Nút Gia Hạn Thuê Xe khi đơn đã duyệt hoặc đang thuê */}
+          {['CONFIRMED', 'IN_RENTAL', 'APPROVED'].includes(b?.status) && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowExtensionModal(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              leftIcon={<CalendarPlus className="w-4 h-4 text-amber-300" />}
+            >
+              Gia Hạn Thuê (US-16)
+            </Button>
+          )}
+
           <Button
             variant="outline"
             size="sm"
@@ -364,6 +383,44 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
               className="border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-900 font-bold shrink-0 shadow-2xs"
             >
               Xem Hợp Đồng Điện Tử (US-12)
+            </Button>
+          </div>
+        )}
+
+        {/* Banner 4: Gia hạn thời gian thuê xe (US-16 & US-17) */}
+        {['CONFIRMED', 'IN_RENTAL', 'APPROVED'].includes(b?.status) && (
+          <div className="px-6 py-4 bg-gradient-to-r from-teal-50 via-cyan-50 to-teal-50 border-b border-teal-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-teal-600 text-white shrink-0 shadow-xs">
+                <Sparkles className="w-6 h-6 text-amber-300" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <strong className="text-sm font-black text-teal-950">
+                    {b?.hasActiveExtension ? 'Đơn Thuê Xe Đã Được Gia Hạn Thành Công!' : 'Gia Hạn Thời Gian Thuê Xe (US-16, US-17)'}
+                  </strong>
+                  {b?.hasActiveExtension && (
+                    <span className="text-[10px] font-mono font-bold bg-teal-200 text-teal-900 px-2 py-0.5 rounded">
+                      ĐÃ GIA HẠN
+                    </span>
+                  )}
+                </div>
+                <p className="text-slate-600 mt-0.5">
+                  {b?.hasActiveExtension
+                    ? `Hạn trả xe mới: ${new Date(b?.endDate).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })} (${b?.totalDays} ngày tổng cộng). Hệ thống đã tự động duyệt.`
+                    : 'Cần sử dụng thêm xe? Hệ thống tự động kiểm tra lịch trống tiếp theo để duyệt gia hạn tức thì.'}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowExtensionModal(true)}
+              leftIcon={<CalendarPlus className="w-4 h-4 text-amber-300" />}
+              className="bg-teal-700 hover:bg-teal-800 text-white font-bold shrink-0 shadow-xs"
+            >
+              {b?.hasActiveExtension ? 'Gia Hạn Thêm Lần Nữa' : 'Gia Hạn Thuê Xe'}
             </Button>
           </div>
         )}
@@ -978,6 +1035,16 @@ export default function BookingDetailPage({ params }: { params: Promise<{ id: st
         contract={contractData}
         isOpen={showContractModal}
         onClose={() => setShowContractModal(false)}
+      />
+
+      {/* US-16 & US-17: Modal Gia Hạn Thời Gian Thuê Xe */}
+      <RentalExtensionModal
+        booking={b}
+        isOpen={showExtensionModal}
+        onClose={() => setShowExtensionModal(false)}
+        onSuccess={(updated) => {
+          setBookingData(updated);
+        }}
       />
     </div>
   );

@@ -137,6 +137,49 @@ export interface BookingResponse {
   depositTransactionRef?: string | null;
   rejectionReason?: string | null;
   createdAt: string;
+  extensions?: RentalExtensionItem[];
+  hasActiveExtension?: boolean;
+}
+
+export interface RentalExtensionItem {
+  extensionId: number;
+  extensionCode: string;
+  currentEndDate: string;
+  newEndDate: string;
+  extendedDays: number;
+  dailyPrice: number;
+  extraAmount: number;
+  reason?: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  systemDecision?: 'AUTO_APPROVED' | 'AUTO_REJECTED' | 'MANUAL_REVIEW' | null;
+  systemNotes?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+}
+
+export interface ExtensionPreviewData {
+  bookingId: number;
+  bookingCode: string;
+  carName: string;
+  licensePlate: string;
+  currentEndDate: string;
+  newEndDate: string;
+  currentTotalDays: number;
+  extendedDays: number;
+  newTotalDays: number;
+  dailyPrice: number;
+  extraAmount: number;
+  currentTotalAmount: number;
+  newTotalAmount: number;
+  isAvailable: boolean;
+  conflictReason: string | null;
+  systemSuggestedDecision: 'AUTO_APPROVED' | 'AUTO_REJECTED';
+  decisionNote: string;
+}
+
+export interface RequestExtensionPayload {
+  newEndDate: string;
+  reason?: string;
 }
 
 export const bookingService = {
@@ -223,6 +266,24 @@ export const bookingService = {
   // US-12: Khởi tạo lại Hợp đồng thuê xe điện tử
   generateRentalContract: async (idOrCode: string | number) => {
     const res = await apiClient.post(`/bookings/${idOrCode}/generate-contract`);
+    return res.data;
+  },
+
+  // US-16 & US-17: Khách hàng xem trước chi phí & kiểm tra tự động trước khi xin gia hạn
+  previewExtension: async (idOrCode: string | number, payload: RequestExtensionPayload) => {
+    const res = await apiClient.post(`/bookings/${idOrCode}/extend/preview`, payload);
+    return res.data;
+  },
+
+  // US-16 & US-17: Gửi yêu cầu gia hạn thời gian thuê và tự động xét duyệt
+  requestExtension: async (idOrCode: string | number, payload: RequestExtensionPayload) => {
+    const res = await apiClient.post(`/bookings/${idOrCode}/extend`, payload);
+    return res.data;
+  },
+
+  // US-16: Lấy lịch sử các lần gia hạn của đơn thuê xe
+  getExtensions: async (idOrCode: string | number) => {
+    const res = await apiClient.get(`/bookings/${idOrCode}/extensions`);
     return res.data;
   },
 

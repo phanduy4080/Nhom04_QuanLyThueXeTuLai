@@ -81,6 +81,26 @@ CREATE TABLE IF NOT EXISTS rental.handover_records (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Bảng Yêu cầu gia hạn thuê xe (booking.rental_extensions - Sprint 6: US-16, US-17)
+CREATE TABLE IF NOT EXISTS booking.rental_extensions (
+    extension_id SERIAL PRIMARY KEY,
+    extension_code VARCHAR(50) UNIQUE NOT NULL,
+    booking_id INT NOT NULL REFERENCES booking.bookings(booking_id) ON DELETE CASCADE,
+    current_end_date TIMESTAMPTZ NOT NULL,
+    new_end_date TIMESTAMPTZ NOT NULL,
+    extended_days INT NOT NULL DEFAULT 1,
+    daily_price NUMERIC(15, 2) NOT NULL DEFAULT 0,
+    extra_amount NUMERIC(15, 2) NOT NULL DEFAULT 0,
+    reason TEXT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+    system_decision VARCHAR(50) NULL,
+    system_notes TEXT NULL,
+    reviewed_by BIGINT NULL REFERENCES iam.users(user_id) ON DELETE SET NULL,
+    reviewed_at TIMESTAMPTZ NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Dữ liệu mẫu khởi tạo cho Bookings
 INSERT INTO booking.bookings (
     booking_code, customer_name, phone, email, id_number, license_number,

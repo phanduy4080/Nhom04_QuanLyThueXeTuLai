@@ -7,6 +7,7 @@ import { VerifyDocumentsDto } from './dto/verify-documents.dto';
 import { ReviewVerificationDto } from './dto/review-verification.dto';
 import { RejectBookingDto } from './dto/reject-booking.dto';
 import { PayDepositDto } from './dto/pay-deposit.dto';
+import { RequestExtensionDto } from './dto/request-extension.dto';
 import { Prisma } from '@prisma/client';
 
 export interface DriverEvaluationInput {
@@ -843,6 +844,9 @@ export class BookingsService {
           },
           pickupBranch: true,
           returnBranch: true,
+          extensions: {
+            orderBy: { createdAt: 'desc' },
+          },
         },
       }),
     ]);
@@ -881,6 +885,9 @@ export class BookingsService {
         },
         pickupBranch: true,
         returnBranch: true,
+        extensions: {
+          orderBy: { createdAt: 'desc' },
+        },
       },
     });
 
@@ -1502,6 +1509,313 @@ export class BookingsService {
     return this.generateRentalContract(booking.bookingId);
   }
 
+  /**
+   * US-17: Kiểm tra lịch trống xe để phục vụ tự động duyệt hoặc từ chối gia hạn
+   */
+  async checkExtensionAvailability(
+    vehicleId: number | bigint,
+    currentBookingId: number,
+    currentEndDate: Date,
+    newEndDate: Date,
+  ): Promise<{ available: boolean; reason?: string; conflictingBooking?: any }> {
+    // 1. Kiểm tra đơn đặt xe khác của cùng phương tiện trong khoảng thời gian gia hạn
+    // Khoảng thời gian gia hạn là từ currentEndDate đến newEndDate
+    const conflictingBooking = await this.prisma.booking.findFirst({
+      where: {
+        vehicleId: BigInt(vehicleId),
+        bookingId: { not: currentBookingId },
+        status: { in: ['PENDING', 'CONFIRMED', 'IN_RENTAL'] },
+        AND: [
+          { startDate: { lt: newEndDate } },
+          { endDate: { gt: currentEndDate } },
+        ],
+      },
+      orderBy: { startDate: 'asc' },
+    });
+
+    if (conflictingBooking) {
+      const conflictStart = conflictingBooking.startDate
+        ? conflictingBooking.startDate.toISOString().slice(0, 16).replace('T', ' ')
+        : 'sắp tới';
+      const conflictEnd = conflictingBooking.endDate
+        ? conflictingBooking.endDate.toISOString().slice(0, 16).replace('T', ' ')
+        : '';
+      return {
+        available: false,
+        reason: `Xe đã có lịch đặt tiếp theo (Mã đơn: ${conflictingBooking.bookingCode}) từ ${conflictStart} đến ${conflictEnd}. Hệ thống không thể gia hạn thêm.`,
+        conflictingBooking: {
+          bookingCode: conflictingBooking.bookingCode,
+          startDate: conflictingBooking.startDate,
+          endDate: conflictingBooking.endDate,
+        },
+      };
+    }
+
+    // 2. Kiểm tra xem xe có đang bị khóa / chặn lịch bảo dưỡng trong khoảng thời gian này không
+    const conflictingBlock = await this.prisma.vehicleAvailabilityBlock.findFirst({
+      where: {
+        vehicleId: BigInt(vehicleId),
+        isActive: true,
+        OR: [
+          { holdExpiresAt: null },
+          { holdExpiresAt: { gt: currentEndDate } },
+        ],
+      },
+    });
+
+    if (conflictingBlock) {
+      return {
+        available: false,
+        reason: `Xe đã được lên lịch khóa/bảo dưỡng (${conflictingBlock.note || conflictingBlock.blockType || 'Bảo trì định kỳ'}) trong khoảng thời gian này.`,
+      };
+    }
+
+    return { available: true };
+  }
+
+  /**
+   * US-16 & US-17: Xem trước thông tin chi phí và khả năng gia hạn thuê xe
+   */
+  async previewRentalExtension(idOrCode: string | number, dto: RequestExtensionDto) {
+    let where: Prisma.BookingWhereInput = {};
+    if (typeof idOrCode === 'number' || !isNaN(Number(idOrCode))) {
+      where = { bookingId: Number(idOrCode) };
+    } else {
+      where = { bookingCode: String(idOrCode) };
+    }
+
+    const booking = await this.prisma.booking.findFirst({
+      where,
+      include: {
+        vehicle: {
+          include: {
+            model: { include: { brand: true, category: true } },
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    if (!['CONFIRMED', 'IN_RENTAL'].includes(booking.status)) {
+      throw new BadRequestException(
+        `Chỉ có thể gia hạn đơn thuê đang ở trạng thái 'Đã duyệt' hoặc 'Đang thuê'. Trạng thái hiện tại: ${booking.status}`,
+      );
+    }
+
+    const currentEnd = new Date(booking.endDate);
+    const newEnd = new Date(dto.newEndDate);
+
+    if (isNaN(newEnd.getTime())) {
+      throw new BadRequestException('Thời gian trả xe mới không hợp lệ');
+    }
+
+    if (newEnd.getTime() <= currentEnd.getTime()) {
+      throw new BadRequestException(
+        `Thời gian gia hạn mới (${newEnd.toLocaleString('vi-VN')}) phải sau thời gian trả xe hiện tại (${currentEnd.toLocaleString('vi-VN')})`,
+      );
+    }
+
+    // Tính số ngày phát sinh
+    const diffMs = newEnd.getTime() - currentEnd.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    const extendedDays = Math.max(1, diffDays);
+
+    const dailyPrice = Number(booking.dailyPrice || 0);
+    const extraAmount = extendedDays * dailyPrice;
+
+    // Kiểm tra khả năng tự động duyệt
+    const availability = await this.checkExtensionAvailability(
+      booking.vehicleId,
+      booking.bookingId,
+      currentEnd,
+      newEnd,
+    );
+
+    const vehicleName = booking.vehicle?.model
+      ? `${booking.vehicle.model.brand?.name || ''} ${booking.vehicle.model.name || ''}`.trim()
+      : 'Xe Ô Tô';
+
+    return {
+      bookingId: booking.bookingId,
+      bookingCode: booking.bookingCode,
+      carName: vehicleName,
+      licensePlate: booking.vehicle?.licensePlate || '',
+      currentEndDate: currentEnd.toISOString(),
+      newEndDate: newEnd.toISOString(),
+      currentTotalDays: booking.totalDays,
+      extendedDays,
+      newTotalDays: booking.totalDays + extendedDays,
+      dailyPrice,
+      extraAmount,
+      currentTotalAmount: Number(booking.totalAmount),
+      newTotalAmount: Number(booking.totalAmount) + extraAmount,
+      isAvailable: availability.available,
+      conflictReason: availability.reason || null,
+      systemSuggestedDecision: availability.available ? 'AUTO_APPROVED' : 'AUTO_REJECTED',
+      decisionNote: availability.available
+        ? 'Xe hoàn toàn trống lịch tiếp theo. Yêu cầu sẽ được hệ thống TỰ ĐỘNG DUYỆT ngay lập tức khi gửi!'
+        : `Không thể tự động duyệt: ${availability.reason}`,
+    };
+  }
+
+  /**
+   * US-16 & US-17: Khách hàng gửi yêu cầu gia hạn thời gian thuê xe và hệ thống tự động xử lý
+   */
+  async requestRentalExtension(
+    idOrCode: string | number,
+    dto: RequestExtensionDto,
+    customerUserId?: number | bigint,
+  ) {
+    const preview = await this.previewRentalExtension(idOrCode, dto);
+
+    const booking = await this.prisma.booking.findUnique({
+      where: { bookingId: preview.bookingId },
+      include: {
+        vehicle: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    // Sinh mã yêu cầu gia hạn độc nhất
+    const extCount = await this.prisma.rentalExtension.count({
+      where: { bookingId: booking.bookingId },
+    });
+    const extensionCode = `EXT-${booking.bookingCode}-${String(extCount + 1).padStart(2, '0')}`;
+
+    const currentEnd = new Date(booking.endDate);
+    const newEnd = new Date(dto.newEndDate);
+
+    const isAutoApproved = preview.isAvailable;
+    const extensionStatus = isAutoApproved ? 'APPROVED' : 'REJECTED';
+    const systemDecision = isAutoApproved ? 'AUTO_APPROVED' : 'AUTO_REJECTED';
+    const systemNotes = isAutoApproved
+      ? `Hệ thống tự động duyệt gia hạn thêm ${preview.extendedDays} ngày (đến ${newEnd.toLocaleString('vi-VN')}). Xe không có lịch trùng.`
+      : `Hệ thống tự động từ chối yêu cầu gia hạn: ${preview.conflictReason}`;
+
+    // Lưu vào bảng rental_extensions
+    const extensionRecord = await this.prisma.rentalExtension.create({
+      data: {
+        extensionCode,
+        bookingId: booking.bookingId,
+        currentEndDate: currentEnd,
+        newEndDate: newEnd,
+        extendedDays: preview.extendedDays,
+        dailyPrice: preview.dailyPrice,
+        extraAmount: preview.extraAmount,
+        reason: dto.reason || 'Khách hàng yêu cầu gia hạn qua ứng dụng',
+        status: extensionStatus,
+        systemDecision,
+        systemNotes,
+        reviewedAt: new Date(),
+      },
+    });
+
+    // Nếu tự động duyệt: cập nhật thông tin đơn đặt xe
+    if (isAutoApproved) {
+      const updatedTotalAmount = Number(booking.totalAmount) + preview.extraAmount;
+      const updatedTotalDays = booking.totalDays + preview.extendedDays;
+
+      // Cập nhật hợp đồng điện tử nếu có
+      let updatedContractTerms = booking.contractTerms as any;
+      if (updatedContractTerms && typeof updatedContractTerms === 'object') {
+        const history = updatedContractTerms.extensions || [];
+        history.push({
+          extensionCode,
+          extendedDays: preview.extendedDays,
+          oldEndDate: currentEnd.toISOString(),
+          newEndDate: newEnd.toISOString(),
+          extraAmount: preview.extraAmount,
+          approvedAt: new Date().toISOString(),
+        });
+        updatedContractTerms = {
+          ...updatedContractTerms,
+          extensions: history,
+          latestExtensionNote: `Đã gia hạn thêm ${preview.extendedDays} ngày đến ${newEnd.toLocaleDateString('vi-VN')}`,
+        };
+      }
+
+      await this.prisma.booking.update({
+        where: { bookingId: booking.bookingId },
+        data: {
+          endDate: newEnd,
+          totalDays: updatedTotalDays,
+          totalAmount: updatedTotalAmount,
+          contractTerms: updatedContractTerms,
+          notes: `${booking.notes || ''}\n[${new Date().toISOString()}] Đã gia hạn thành công (+${preview.extendedDays} ngày) đến ${newEnd.toISOString()} theo yêu cầu ${extensionCode}. Chi phí phát sinh: ${preview.extraAmount.toLocaleString('vi-VN')} VND.`,
+        },
+      });
+    }
+
+    return {
+      success: isAutoApproved,
+      extension: {
+        extensionId: extensionRecord.extensionId,
+        extensionCode: extensionRecord.extensionCode,
+        status: extensionRecord.status,
+        systemDecision: extensionRecord.systemDecision,
+        systemNotes: extensionRecord.systemNotes,
+        currentEndDate: currentEnd.toISOString(),
+        newEndDate: newEnd.toISOString(),
+        extendedDays: preview.extendedDays,
+        dailyPrice: preview.dailyPrice,
+        extraAmount: preview.extraAmount,
+        reason: extensionRecord.reason,
+        createdAt: extensionRecord.createdAt.toISOString(),
+      },
+      message: isAutoApproved
+        ? `Yêu cầu gia hạn ${extensionCode} đã được HỆ THỐNG TỰ ĐỘNG DUYỆT THÀNH CÔNG! Thời gian thuê mới đến ${newEnd.toLocaleString('vi-VN')}.`
+        : `Yêu cầu gia hạn ${extensionCode} đã bị HỆ THỐNG TỰ ĐỘNG TỪ CHỐI: ${preview.conflictReason}`,
+    };
+  }
+
+  /**
+   * Lấy danh sách lịch sử các lần gia hạn của 1 đơn đặt xe
+   */
+  async getBookingExtensions(idOrCode: string | number) {
+    let where: Prisma.BookingWhereInput = {};
+    if (typeof idOrCode === 'number' || !isNaN(Number(idOrCode))) {
+      where = { bookingId: Number(idOrCode) };
+    } else {
+      where = { bookingCode: String(idOrCode) };
+    }
+
+    const booking = await this.prisma.booking.findFirst({
+      where,
+      select: {
+        bookingId: true,
+        bookingCode: true,
+        extensions: {
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy đơn đặt xe');
+    }
+
+    return (booking.extensions || []).map((ext) => ({
+      extensionId: ext.extensionId,
+      extensionCode: ext.extensionCode,
+      currentEndDate: ext.currentEndDate.toISOString(),
+      newEndDate: ext.newEndDate.toISOString(),
+      extendedDays: ext.extendedDays,
+      dailyPrice: Number(ext.dailyPrice),
+      extraAmount: Number(ext.extraAmount),
+      reason: ext.reason,
+      status: ext.status,
+      systemDecision: ext.systemDecision,
+      systemNotes: ext.systemNotes,
+      createdAt: ext.createdAt.toISOString(),
+    }));
+  }
+
   private formatBooking(b: any) {
     const vehicleName = b.vehicle?.model
       ? `${b.vehicle.model.brand?.name || ''} ${b.vehicle.model.name || ''} ${b.vehicle.model.variant || ''}`.trim()
@@ -1517,6 +1831,24 @@ export class BookingsService {
       }
     }
     thumbnail = images[0] || '';
+
+    const extensions = b.extensions
+      ? b.extensions.map((ext: any) => ({
+          extensionId: ext.extensionId,
+          extensionCode: ext.extensionCode,
+          currentEndDate: ext.currentEndDate ? ext.currentEndDate.toISOString() : '',
+          newEndDate: ext.newEndDate ? ext.newEndDate.toISOString() : '',
+          extendedDays: ext.extendedDays,
+          dailyPrice: Number(ext.dailyPrice),
+          extraAmount: Number(ext.extraAmount),
+          reason: ext.reason || null,
+          status: ext.status,
+          systemDecision: ext.systemDecision || null,
+          systemNotes: ext.systemNotes || null,
+          reviewedAt: ext.reviewedAt ? ext.reviewedAt.toISOString() : null,
+          createdAt: ext.createdAt ? ext.createdAt.toISOString() : '',
+        }))
+      : [];
 
     return {
       id: b.bookingId,
@@ -1576,6 +1908,8 @@ export class BookingsService {
       depositTransactionRef: b.depositTransactionRef || null,
       rejectionReason: b.rejectionReason || null,
       createdAt: b.createdAt ? b.createdAt.toISOString() : '',
+      extensions,
+      hasActiveExtension: extensions.some((e: any) => e.status === 'APPROVED'),
     };
   }
 }

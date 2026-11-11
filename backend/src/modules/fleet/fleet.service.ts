@@ -9,7 +9,28 @@ import { UpdateModelDto } from './dto/update-model.dto';
 import { QueryModelsDto } from './dto/query-models.dto';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
+import { BannerConfigDto } from './dto/banner-config.dto';
 import { Prisma, VehicleStatus } from '@prisma/client';
+
+export const DEFAULT_BANNER_CONFIG: BannerConfigDto = {
+  title: 'Mercedes-Benz W211 E55 AMG',
+  year: 2006,
+  subtitle: 'V8 Kompressor Huyền Thoại • Gói AMG Cao Cấp',
+  tag: 'Mô Hình 3D Tương Tác',
+  modelType: 'SKETCHFAB',
+  sketchfabId: 'f18053ad7b8347008917423c26391907',
+  sketchfabUrl: 'https://sketchfab.com/3d-models/mercedes-benz-w211-e55-wwwvecarzcom-f18053ad7b8347008917423c26391907',
+  fallbackImageUrl: 'https://media.sketchfab.com/models/f18053ad7b8347008917423c26391907/thumbnails/49a6dadb5d7c418ea2ccd6117299dbc2/a73aef3fca5a4cb692a58d6266c759d6.jpeg',
+  bgImageUrl: 'https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&w=2000&q=85',
+  pricePerDay: 2200000,
+  seats: 5,
+  fuel: 'Xăng 5.4L V8 Supercharged (469 HP)',
+  transmission: 'Tự động 5G-TRONIC Speedshift',
+  ctaText: 'Thuê Xe Ngay',
+  ctaLink: '/cars?search=Mercedes',
+  autoRotate: true,
+  isActive: true,
+};
 
 @Injectable()
 export class FleetService {
@@ -23,7 +44,9 @@ export class FleetService {
       search,
       branchId,
       categoryId,
+      category,
       brandId,
+      brand,
       seats,
       transmission,
       fuelType,
@@ -61,10 +84,34 @@ export class FleetService {
       if (maxPrice) where.listPricePerDay.lte = new Prisma.Decimal(maxPrice);
     }
 
-    if (categoryId || brandId) {
-      where.model = {};
-      if (categoryId) where.model.categoryId = categoryId;
-      if (brandId) where.model.brandId = brandId;
+    if (categoryId || brandId || category || brand) {
+      where.model = where.model || {};
+      if (categoryId) {
+        where.model.categoryId = categoryId;
+      } else if (category) {
+        if (!isNaN(Number(category))) {
+          where.model.categoryId = Number(category);
+        } else {
+          where.model.category = {
+            OR: [
+              { code: { equals: category, mode: 'insensitive' } },
+              { name: { contains: category, mode: 'insensitive' } },
+            ],
+          };
+        }
+      }
+
+      if (brandId) {
+        where.model.brandId = brandId;
+      } else if (brand) {
+        if (!isNaN(Number(brand))) {
+          where.model.brandId = Number(brand);
+        } else {
+          where.model.brand = {
+            name: { contains: brand, mode: 'insensitive' },
+          };
+        }
+      }
     }
 
     if (search) {
@@ -576,18 +623,89 @@ export class FleetService {
       throw new NotFoundException('Không tìm thấy xe');
     }
 
-    const isAvailable = vehicle.status === 'AVAILABLE' && vehicle.availabilityBlocks.length === 0;
+    // 1. Kiểm tra trạng thái xe trong hệ thống
+    if (['MAINTENANCE', 'REPAIRING', 'SUSPENDED', 'DECOMMISSIONED'].includes(vehicle.status)) {
+      return {
+        vehicleId: vehicle.vehicleId.toString(),
+        licensePlate: vehicle.licensePlate,
+        currentStatus: vehicle.status,
+        isAvailable: false,
+        conflictType: 'STATUS_UNAVAILABLE',
+        startDate,
+        endDate,
+        message: 'Xe hiện đang trong thời gian bảo dưỡng hoặc sửa chữa, không thể đặt xe',
+      };
+    }
+
+    // 2. Kiểm tra khối lịch bận thủ công (availabilityBlocks)
+    const activeBlock = vehicle.availabilityBlocks.find((b) => {
+      if (!b.isActive) return false;
+      if (b.holdExpiresAt && new Date(b.holdExpiresAt) <= new Date()) return false;
+      return true;
+    });
+
+    if (activeBlock) {
+      return {
+        vehicleId: vehicle.vehicleId.toString(),
+        licensePlate: vehicle.licensePlate,
+        currentStatus: vehicle.status,
+        isAvailable: false,
+        conflictType: 'MAINTENANCE_CONFLICT',
+        startDate,
+        endDate,
+        message: `Xe hiện đang bị khóa giữ chỗ hoặc tạm ngưng: ${activeBlock.note || 'Tạm khóa phương tiện'}`,
+      };
+    }
+
+    // 3. Kiểm tra các đơn đặt xe hiện hữu đang trùng khoảng thời gian (US-05)
+    const conflictBooking = await this.prisma.booking.findFirst({
+      where: {
+        vehicleId,
+        status: { in: ['PENDING', 'CONFIRMED', 'IN_RENTAL', 'IN_PROGRESS'] },
+        AND: [
+          { startDate: { lt: end } },
+          { endDate: { gt: start } },
+        ],
+      },
+      select: {
+        bookingId: true,
+        bookingCode: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+      },
+    });
+
+    if (conflictBooking) {
+      const formatDate = (d: Date) => {
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        return `${pad(d.getHours())}:${pad(d.getMinutes())} ngày ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
+      };
+      return {
+        vehicleId: vehicle.vehicleId.toString(),
+        licensePlate: vehicle.licensePlate,
+        currentStatus: vehicle.status,
+        isAvailable: false,
+        conflictType: 'BOOKING_CONFLICT',
+        conflictBooking: {
+          startDate: conflictBooking.startDate.toISOString(),
+          endDate: conflictBooking.endDate.toISOString(),
+          bookingCode: conflictBooking.bookingCode,
+        },
+        startDate,
+        endDate,
+        message: `Xe đã có lịch đặt từ ${formatDate(new Date(conflictBooking.startDate))} đến ${formatDate(new Date(conflictBooking.endDate))}`,
+      };
+    }
 
     return {
       vehicleId: vehicle.vehicleId.toString(),
       licensePlate: vehicle.licensePlate,
       currentStatus: vehicle.status,
-      isAvailable,
+      isAvailable: true,
       startDate,
       endDate,
-      message: isAvailable
-        ? 'Xe hoàn toàn có sẵn trong thời gian bạn chọn'
-        : 'Xe hiện không thể đặt trong khoảng thời gian này',
+      message: 'Xe hoàn toàn có sẵn trong thời gian bạn chọn',
     };
   }
 
@@ -1038,5 +1156,64 @@ export class FleetService {
     });
 
     return { success: true, message: 'Đã xóa xe khỏi đội xe thành công' };
+  }
+
+  /**
+   * Lấy cấu hình Hero Banner 3D trang chủ
+   */
+  async getBannerConfig(): Promise<BannerConfigDto> {
+    try {
+      const setting = await this.prisma.setting.findUnique({
+        where: { settingKey: 'HERO_BANNER_CONFIG' },
+      });
+      if (setting && setting.value) {
+        return { ...DEFAULT_BANNER_CONFIG, ...JSON.parse(setting.value) };
+      }
+    } catch (e) {
+      console.error('Error fetching banner config from DB:', e);
+    }
+    return DEFAULT_BANNER_CONFIG;
+  }
+
+  /**
+   * Cập nhật cấu hình Hero Banner 3D trang chủ (Admin/Staff)
+   */
+  async updateBannerConfig(dto: BannerConfigDto, userId?: string) {
+    // Tự động phân tích và trích xuất 32-ký tự Sketchfab UID nếu người dùng dán cả đường dẫn
+    let sketchfabId = dto.sketchfabId;
+    if (dto.sketchfabUrl) {
+      const match = dto.sketchfabUrl.match(/([a-f0-9]{32})/i);
+      if (match) {
+        sketchfabId = match[1];
+      }
+    }
+
+    const merged: BannerConfigDto = {
+      ...DEFAULT_BANNER_CONFIG,
+      ...dto,
+      sketchfabId: sketchfabId || dto.sketchfabId || DEFAULT_BANNER_CONFIG.sketchfabId,
+    };
+
+    await this.prisma.setting.upsert({
+      where: { settingKey: 'HERO_BANNER_CONFIG' },
+      create: {
+        settingKey: 'HERO_BANNER_CONFIG',
+        value: JSON.stringify(merged),
+        valueType: 'json',
+        description: 'Cấu hình Hero Banner 3D trang chủ',
+        updatedBy: userId ? BigInt(userId) : null,
+      },
+      update: {
+        value: JSON.stringify(merged),
+        updatedAt: new Date(),
+        updatedBy: userId ? BigInt(userId) : null,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Cập nhật cấu hình Banner thành công',
+      data: merged,
+    };
   }
 }

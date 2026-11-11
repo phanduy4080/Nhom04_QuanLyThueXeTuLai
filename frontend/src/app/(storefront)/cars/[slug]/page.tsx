@@ -20,9 +20,10 @@ import {
   Camera,
   Sparkles,
   ShieldCheck,
+  Ban,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { carService } from '@/services/car.service';
+import { carService, VehicleAvailabilityResult } from '@/services/car.service';
 import { pricingService, PriceCalculationResult } from '@/services/pricing.service';
 import { formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -46,6 +47,10 @@ export default function CarDetailPage({ params }: { params: Promise<{ slug: stri
 
   // Quote Result (US-06)
   const [quote, setQuote] = useState<PriceCalculationResult | null>(null);
+
+  // US-05: Kiểm tra tính sẵn sàng của xe theo thời gian thực (Cảnh báo trùng lịch ngay tại trang)
+  const [availability, setAvailability] = useState<VehicleAvailabilityResult | null>(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
 
   useEffect(() => {
     const fetchCarAndPolicy = async () => {
@@ -100,6 +105,57 @@ export default function CarDetailPage({ params }: { params: Promise<{ slug: stri
 
     calculateQuote();
   }, [carId, startDate, endDate, selectedInsuranceId, selectedExtraIds]);
+
+  // US-05: Tự động kiểm tra trùng lịch đặt xe ngay khi khách thay đổi ngày nhận / trả xe
+  useEffect(() => {
+    const checkAvailability = async () => {
+      if (!carId || !startDate || !endDate) return;
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (start >= end) {
+        setAvailability({
+          vehicleId: String(carId),
+          licensePlate: '',
+          currentStatus: '',
+          isAvailable: false,
+          conflictType: 'STATUS_UNAVAILABLE',
+          startDate,
+          endDate,
+          message: 'Thời gian nhận xe phải trước thời gian trả xe',
+        });
+        return;
+      }
+
+      try {
+        setCheckingAvailability(true);
+        const res = await carService.checkAvailability(
+          String(carId),
+          start.toISOString(),
+          end.toISOString(),
+        );
+        if (res?.data) {
+          setAvailability(res.data);
+        }
+      } catch (err: any) {
+        const msg = err.response?.data?.message || 'Không thể kiểm tra lịch xe';
+        setAvailability({
+          vehicleId: String(carId),
+          licensePlate: '',
+          currentStatus: '',
+          isAvailable: false,
+          conflictType: 'STATUS_UNAVAILABLE',
+          startDate,
+          endDate,
+          message: msg,
+        });
+      } finally {
+        setCheckingAvailability(false);
+      }
+    };
+
+    checkAvailability();
+  }, [carId, startDate, endDate]);
 
   const toggleExtra = (id: number) => {
     if (selectedExtraIds.includes(id)) {
@@ -435,6 +491,40 @@ export default function CarDetailPage({ params }: { params: Promise<{ slug: stri
                   className="w-full h-11 px-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400 font-medium"
                 />
               </div>
+
+              {/* US-05 Cảnh báo trùng lịch trực tiếp theo thời gian thực */}
+              {checkingAvailability && (
+                <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800 animate-pulse">
+                  <div className="w-3.5 h-3.5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin shrink-0" />
+                  <span>Đang kiểm tra lịch trống của xe...</span>
+                </div>
+              )}
+
+              {!checkingAvailability && availability && !availability.isAvailable && (
+                <div className="p-3.5 bg-rose-50 border-2 border-rose-300 rounded-2xl flex items-start gap-3 text-xs text-rose-900 shadow-sm animate-in fade-in duration-200">
+                  <div className="p-1 rounded-lg bg-rose-100 text-rose-600 shrink-0 mt-0.5">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="font-black text-rose-900 text-[13px] flex items-center gap-1.5">
+                      <span>⚠️ Phương Tiện Đã Có Lịch Đặt Trùng!</span>
+                    </p>
+                    <p className="text-rose-700 font-semibold leading-relaxed">
+                      {availability.message}
+                    </p>
+                    <p className="text-[11px] text-rose-600 font-medium pt-0.5">
+                      💡 Vui lòng đổi giờ nhận / trả xe hoặc chọn xe khác còn trống.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!checkingAvailability && availability && availability.isAvailable && (
+                <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-bold">Lịch thuê hợp lệ • Xe đang sẵn sàng bàn giao</span>
+                </div>
+              )}
             </div>
 
             {/* Chọn Gói Bảo Hiểm (US-06) */}
@@ -541,16 +631,33 @@ export default function CarDetailPage({ params }: { params: Promise<{ slug: stri
               </div>
             </div>
 
-            {/* Nút Đặt Xe */}
-            <Link href={`/booking?carId=${car.id}&start=${startDate}&end=${endDate}&ins=${selectedInsuranceId}`}>
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full h-12 shadow-lg shadow-amber-500/25 font-black text-base"
-              >
-                Tiến Hành Đặt Xe Ngay
-              </Button>
-            </Link>
+            {/* Nút Đặt Xe (Bị vô hiệu hóa nếu xe trùng lịch) */}
+            {availability && !availability.isAvailable ? (
+              <div className="space-y-1.5">
+                <button
+                  type="button"
+                  disabled
+                  className="w-full h-12 bg-slate-200 border-2 border-slate-300 text-slate-500 font-black text-sm rounded-xl cursor-not-allowed flex items-center justify-center gap-2 select-none"
+                >
+                  <Ban className="w-4 h-4 text-rose-500" />
+                  <span>Không Thể Đặt (Xe Đã Có Người Thuê)</span>
+                </button>
+                <p className="text-[11px] text-center text-rose-600 font-semibold">
+                  * Vui lòng chọn khung giờ khác để mở khóa nút đặt xe
+                </p>
+              </div>
+            ) : (
+              <Link href={`/booking?carId=${car.id}&start=${startDate}&end=${endDate}&ins=${selectedInsuranceId}`}>
+                <Button
+                  variant="primary"
+                  size="lg"
+                  disabled={checkingAvailability}
+                  className="w-full h-12 shadow-lg shadow-amber-500/25 font-black text-base"
+                >
+                  {checkingAvailability ? 'Đang kiểm tra lịch...' : 'Tiến Hành Đặt Xe Ngay'}
+                </Button>
+              </Link>
+            )}
 
             <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 text-center">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />

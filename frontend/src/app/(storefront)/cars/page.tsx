@@ -49,6 +49,8 @@ function CarsCatalogContent() {
     if (b) setSelectedBrand(b);
     const c = searchParams.get('categoryId') || searchParams.get('category') || '';
     if (c) setSelectedCategory(c);
+    const maxP = searchParams.get('maxPrice');
+    if (maxP) setMaxPrice(Number(maxP));
   }, [searchParams]);
 
   const fetchCars = useCallback(async () => {
@@ -57,12 +59,30 @@ function CarsCatalogContent() {
       const params: any = { status: 'AVAILABLE' };
       if (searchTerm) params.search = searchTerm.trim();
       if (selectedBranch) params.branchId = Number(selectedBranch);
-      if (selectedCategory) params.categoryId = Number(selectedCategory);
-      if (selectedBrand) params.brandId = Number(selectedBrand);
+
+      if (selectedCategory) {
+        if (!isNaN(Number(selectedCategory))) {
+          params.categoryId = Number(selectedCategory);
+        } else {
+          params.category = selectedCategory;
+        }
+      }
+
+      if (selectedBrand) {
+        if (!isNaN(Number(selectedBrand))) {
+          params.brandId = Number(selectedBrand);
+        } else {
+          params.brand = selectedBrand;
+        }
+      }
+
       if (selectedSeats) params.seats = Number(selectedSeats);
       if (selectedTransmission) params.transmission = selectedTransmission;
       if (selectedFuel) params.fuelType = selectedFuel;
       if (maxPrice < 3000000) params.maxPrice = maxPrice;
+
+      const minP = searchParams.get('minPrice');
+      if (minP) params.minPrice = Number(minP);
 
       // Anti-conflict date filtering
       if (startDate && endDate) {
@@ -88,6 +108,7 @@ function CarsCatalogContent() {
     selectedTransmission,
     selectedFuel,
     maxPrice,
+    searchParams,
   ]);
 
   useEffect(() => {
@@ -99,15 +120,35 @@ function CarsCatalogContent() {
           carService.getBrands(),
         ]);
         if (bRes.data) setBranches(bRes.data);
-        if (cRes.data) setCategories(cRes.data);
-        if (brRes.data) setBrands(brRes.data);
+        if (cRes.data) {
+          setCategories(cRes.data);
+          const catParam = searchParams.get('category') || searchParams.get('categoryId');
+          if (catParam && isNaN(Number(catParam))) {
+            const matched = cRes.data.find(
+              (c: any) =>
+                c.code?.toUpperCase() === catParam.toUpperCase() ||
+                c.name?.toLowerCase().includes(catParam.toLowerCase()),
+            );
+            if (matched) setSelectedCategory(String(matched.categoryId));
+          }
+        }
+        if (brRes.data) {
+          setBrands(brRes.data);
+          const brandParam = searchParams.get('brand') || searchParams.get('brandId');
+          if (brandParam && isNaN(Number(brandParam))) {
+            const matched = brRes.data.find(
+              (b: any) => b.name?.toLowerCase() === brandParam.toLowerCase(),
+            );
+            if (matched) setSelectedBrand(String(matched.brandId));
+          }
+        }
       } catch (err) {
         console.error(err);
       }
     };
 
     fetchMeta();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     fetchCars();

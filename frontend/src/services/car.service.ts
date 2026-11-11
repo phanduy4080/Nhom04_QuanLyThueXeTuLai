@@ -6,6 +6,22 @@ export interface VehicleStatusUpdatePayload {
   reason?: string;
 }
 
+export interface VehicleAvailabilityResult {
+  vehicleId: string;
+  licensePlate: string;
+  currentStatus: string;
+  isAvailable: boolean;
+  conflictType?: 'BOOKING_CONFLICT' | 'MAINTENANCE_CONFLICT' | 'STATUS_UNAVAILABLE';
+  conflictBooking?: {
+    startDate: string;
+    endDate: string;
+    bookingCode?: string;
+  };
+  startDate: string;
+  endDate: string;
+  message: string;
+}
+
 export const carService = {
   /**
    * US-04: Lấy danh sách xe với bộ lọc và phân trang
@@ -26,8 +42,8 @@ export const carService = {
   /**
    * US-05: Kiểm tra tính sẵn sàng của xe theo khoảng thời gian
    */
-  async checkAvailability(id: string, startDate: string, endDate: string) {
-    const response = await apiClient.get<ApiResponse<{ isAvailable: boolean; message: string }>>(
+  async checkAvailability(id: string, startDate: string, endDate: string): Promise<ApiResponse<VehicleAvailabilityResult>> {
+    const response = await apiClient.get<ApiResponse<VehicleAvailabilityResult>>(
       `/fleet/vehicles/${id}/availability`,
       { params: { startDate, endDate } },
     );

@@ -63,7 +63,9 @@ export interface Car {
 }
 
 export interface CarFilterParams {
-  categoryId?: string;
+  categoryId?: string | number;
+  category?: string;
+  brandId?: number;
   brand?: string;
   seats?: number;
   transmission?: TransmissionType;
@@ -73,6 +75,7 @@ export interface CarFilterParams {
   status?: CarStatus;
   startDate?: string;
   endDate?: string;
+  branchId?: number;
   page?: number;
   limit?: number;
   search?: string;

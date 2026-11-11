@@ -21,11 +21,21 @@ export class QueryVehiclesDto {
   @IsNumber()
   categoryId?: number;
 
+  @ApiPropertyOptional({ example: 'SEDAN', description: 'Lọc theo mã hoặc tên phân khúc xe' })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
   @ApiPropertyOptional({ example: 1, description: 'Lọc theo ID hãng xe' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   brandId?: number;
+
+  @ApiPropertyOptional({ example: 'VinFast', description: 'Lọc theo tên hãng xe' })
+  @IsOptional()
+  @IsString()
+  brand?: string;
 
   @ApiPropertyOptional({ example: 5, description: 'Lọc theo số chỗ ngồi' })
   @IsOptional()

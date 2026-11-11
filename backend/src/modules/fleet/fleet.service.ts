@@ -7,6 +7,8 @@ import { QueryVehiclesDto } from './dto/query-vehicles.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { UpdateModelDto } from './dto/update-model.dto';
 import { QueryModelsDto } from './dto/query-models.dto';
+import { CreateBrandDto } from './dto/create-brand.dto';
+import { UpdateBrandDto } from './dto/update-brand.dto';
 import { Prisma, VehicleStatus } from '@prisma/client';
 
 @Injectable()
@@ -599,11 +601,186 @@ export class FleetService {
     });
   }
 
-  async getBrands() {
-    return this.prisma.brand.findMany({
-      where: { isActive: true },
+  async getBrands(includeInactive = false) {
+    const brands = await this.prisma.brand.findMany({
+      where: includeInactive ? undefined : { isActive: true },
+      include: {
+        logoFile: true,
+        _count: {
+          select: { models: true },
+        },
+      },
       orderBy: { name: 'asc' },
     });
+
+    return brands.map((b) => ({
+      brandId: b.brandId,
+      name: b.name,
+      country: b.country,
+      logoUrl: b.logoFile?.objectKey || null,
+      isActive: b.isActive,
+      modelsCount: b._count?.models || 0,
+    }));
+  }
+
+  async getBrandById(brandId: number) {
+    const brand = await this.prisma.brand.findUnique({
+      where: { brandId },
+      include: {
+        logoFile: true,
+        _count: {
+          select: { models: true },
+        },
+      },
+    });
+
+    if (!brand) {
+      throw new NotFoundException(`Không tìm thấy hãng xe #${brandId}`);
+    }
+
+    return {
+      brandId: brand.brandId,
+      name: brand.name,
+      country: brand.country,
+      logoUrl: brand.logoFile?.objectKey || null,
+      isActive: brand.isActive,
+      modelsCount: brand._count?.models || 0,
+    };
+  }
+
+  async createBrand(dto: CreateBrandDto) {
+    const existing = await this.prisma.brand.findUnique({
+      where: { name: dto.name.trim() },
+    });
+
+    if (existing) {
+      throw new ConflictException(`Hãng xe "${dto.name}" đã tồn tại trên hệ thống`);
+    }
+
+    let logoFileId: bigint | undefined = undefined;
+    if (dto.logoUrl && dto.logoUrl.trim()) {
+      const file = await this.prisma.file.create({
+        data: {
+          storageProvider: 'LOCAL',
+          bucket: 'brand-logos',
+          objectKey: dto.logoUrl.trim(),
+          originalName: `${dto.name.trim()}-logo.png`,
+          mimeType: 'image/png',
+          isPrivate: false,
+        },
+      });
+      logoFileId = file.fileId;
+    }
+
+    const created = await this.prisma.brand.create({
+      data: {
+        name: dto.name.trim(),
+        country: dto.country?.trim() || null,
+        logoFileId,
+        isActive: dto.isActive !== undefined ? dto.isActive : true,
+      },
+      include: {
+        logoFile: true,
+      },
+    });
+
+    return {
+      brandId: created.brandId,
+      name: created.name,
+      country: created.country,
+      logoUrl: created.logoFile?.objectKey || null,
+      isActive: created.isActive,
+      modelsCount: 0,
+    };
+  }
+
+  async updateBrand(brandId: number, dto: UpdateBrandDto) {
+    const existing = await this.prisma.brand.findUnique({
+      where: { brandId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Không tìm thấy hãng xe #${brandId}`);
+    }
+
+    if (dto.name && dto.name.trim() !== existing.name) {
+      const duplicate = await this.prisma.brand.findUnique({
+        where: { name: dto.name.trim() },
+      });
+      if (duplicate) {
+        throw new ConflictException(`Hãng xe "${dto.name}" đã tồn tại`);
+      }
+    }
+
+    let logoFileId = existing.logoFileId;
+    if (dto.logoUrl !== undefined) {
+      if (dto.logoUrl && dto.logoUrl.trim()) {
+        const file = await this.prisma.file.create({
+          data: {
+            storageProvider: 'LOCAL',
+            bucket: 'brand-logos',
+            objectKey: dto.logoUrl.trim(),
+            originalName: `${dto.name?.trim() || existing.name}-logo.png`,
+            mimeType: 'image/png',
+            isPrivate: false,
+          },
+        });
+        logoFileId = file.fileId;
+      } else {
+        logoFileId = null;
+      }
+    }
+
+    const updated = await this.prisma.brand.update({
+      where: { brandId },
+      data: {
+        ...(dto.name && { name: dto.name.trim() }),
+        ...(dto.country !== undefined && { country: dto.country?.trim() || null }),
+        ...(dto.logoUrl !== undefined && { logoFileId }),
+        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
+      },
+      include: {
+        logoFile: true,
+        _count: { select: { models: true } },
+      },
+    });
+
+    return {
+      brandId: updated.brandId,
+      name: updated.name,
+      country: updated.country,
+      logoUrl: updated.logoFile?.objectKey || null,
+      isActive: updated.isActive,
+      modelsCount: updated._count?.models || 0,
+    };
+  }
+
+  async deleteBrand(brandId: number) {
+    const existing = await this.prisma.brand.findUnique({
+      where: { brandId },
+      include: { _count: { select: { models: true } } },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Không tìm thấy hãng xe #${brandId}`);
+    }
+
+    if (existing._count.models > 0) {
+      await this.prisma.brand.update({
+        where: { brandId },
+        data: { isActive: false },
+      });
+      return {
+        brandId,
+        message: `Hãng xe đang có ${existing._count.models} dòng xe liên kết, đã chuyển sang trạng thái Ngưng hoạt động.`,
+      };
+    }
+
+    await this.prisma.brand.delete({ where: { brandId } });
+    return {
+      brandId,
+      message: 'Đã xóa hãng xe thành công.',
+    };
   }
 
   /**

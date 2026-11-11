@@ -20,6 +20,8 @@ function CarsCatalogContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialSearch = searchParams.get('search') || '';
+  const initialBrand = searchParams.get('brandId') || searchParams.get('brand') || '';
+  const initialCategory = searchParams.get('categoryId') || searchParams.get('category') || '';
 
   const [cars, setCars] = useState<any[]>([]);
   const [branches, setBranches] = useState<any[]>([]);
@@ -32,17 +34,21 @@ function CarsCatalogContent() {
   const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [startDate, setStartDate] = useState<string>('2026-10-15T08:00');
   const [endDate, setEndDate] = useState<string>('2026-10-18T20:00');
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedBrand, setSelectedBrand] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
+  const [selectedBrand, setSelectedBrand] = useState<string>(initialBrand);
   const [selectedSeats, setSelectedSeats] = useState<string>('');
   const [selectedTransmission, setSelectedTransmission] = useState<string>('');
   const [selectedFuel, setSelectedFuel] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<number>(3000000);
 
-  // Synchronize when URL search param changes from Header
+  // Synchronize when URL search param changes from Header or Homepage
   useEffect(() => {
     const q = searchParams.get('search') || '';
     setSearchTerm(q);
+    const b = searchParams.get('brandId') || searchParams.get('brand') || '';
+    if (b) setSelectedBrand(b);
+    const c = searchParams.get('categoryId') || searchParams.get('category') || '';
+    if (c) setSelectedCategory(c);
   }, [searchParams]);
 
   const fetchCars = useCallback(async () => {

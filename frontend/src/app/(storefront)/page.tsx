@@ -15,24 +15,30 @@ import {
 } from 'lucide-react';
 import { carService } from '@/services/car.service';
 import { Button } from '@/components/ui/Button';
+import BrandLogo from '@/components/common/BrandLogo';
+import { Brand } from '@/types';
 
 export default function StorefrontHomePage() {
   const [cars, setCars] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [selectedCatId, setSelectedCatId] = useState<number | null>(null);
+  const [selectedBrandId, setSelectedBrandId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [carsRes, catsRes] = await Promise.all([
+        const [carsRes, catsRes, brandsRes] = await Promise.all([
           carService.getCars({ status: 'AVAILABLE' }),
           carService.getCategories(),
+          carService.getBrands(),
         ]);
 
         if (carsRes.data) setCars(carsRes.data);
         if (catsRes.data) setCategories(catsRes.data);
+        if (brandsRes.data) setBrands(brandsRes.data);
       } catch (err) {
         console.error('Error fetching home page data:', err);
       } finally {
@@ -43,19 +49,92 @@ export default function StorefrontHomePage() {
     fetchData();
   }, []);
 
-  const filteredCars = selectedCatId
-    ? cars.filter((c) => c.categoryId === selectedCatId || c.model?.categoryId === selectedCatId)
-    : cars;
+  const filteredCars = cars.filter((c) => {
+    if (selectedCatId && c.categoryId !== selectedCatId && c.model?.categoryId !== selectedCatId) {
+      return false;
+    }
+    if (selectedBrandId && c.brandId !== selectedBrandId && c.model?.brandId !== selectedBrandId) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-12 pb-16">
       {/* 1. Hero Section */}
       <HeroBanner />
 
-      {/* 2. Value Props / Feature Highlights Row */}
-      
+      {/* 2. Brands Bar Section (Khám Phá Theo Hãng Xe) */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-7 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Thương Hiệu Hàng Đầu</span>
+                {selectedBrandId && (
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                    Đang lọc: {brands.find((b) => b.brandId === selectedBrandId)?.name}
+                  </span>
+                )}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Lựa chọn hãng xe yêu thích để khám phá các dòng xe sẵn sàng lăn bánh
+              </p>
+            </div>
 
-      {/* 3. Section: "Dòng Xe Nổi Bật Sẵn Sàng Cho Thuê" */}
+            {selectedBrandId && (
+              <button
+                type="button"
+                onClick={() => setSelectedBrandId(null)}
+                className="text-xs font-semibold text-amber-700 hover:text-amber-800 underline self-start sm:self-auto cursor-pointer"
+              >
+                Xóa lọc hãng (Xem tất cả)
+              </button>
+            )}
+          </div>
+
+          {/* Brands list */}
+          <div className="flex items-center justify-start md:justify-center gap-6 sm:gap-10 overflow-x-auto pb-2">
+            {brands.map((brand) => {
+              const isSelected = selectedBrandId === brand.brandId;
+              return (
+                <button
+                  key={brand.brandId}
+                  type="button"
+                  onClick={() => setSelectedBrandId(isSelected ? null : brand.brandId)}
+                  className={`group flex flex-col items-center gap-2 cursor-pointer shrink-0 transition-transform ${
+                    isSelected ? 'scale-105' : 'hover:scale-105'
+                  }`}
+                  title={`Xem xe hãng ${brand.name}`}
+                >
+                  <div
+                    className={`p-1 rounded-2xl transition-all ${
+                      isSelected
+                        ? 'ring-3 ring-amber-400 ring-offset-2 ring-offset-white shadow-md'
+                        : 'group-hover:ring-2 group-hover:ring-slate-300'
+                    }`}
+                  >
+                    <BrandLogo
+                      name={brand.name}
+                      logoUrl={brand.logoUrl}
+                      size="lg"
+                    />
+                  </div>
+                  <span
+                    className={`text-[11px] sm:text-xs uppercase tracking-wider font-extrabold transition-colors ${
+                      isSelected
+                        ? 'text-amber-600 font-black'
+                        : 'text-slate-700 group-hover:text-slate-950'
+                    }`}
+                  >
+                    {brand.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
       <section id="offer" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>

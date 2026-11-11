@@ -69,6 +69,11 @@ export default function AdminLayout({
       icon: <Layers className="w-4 h-4" />,
     },
     {
+      name: 'Cấu Hình Banner (3D)',
+      href: '/admin/banner',
+      icon: <Sparkles className="w-4 h-4" />,
+    },
+    {
       name: 'Chi Nhánh & Trạm Xe',
       href: '/admin/branches',
       icon: <MapPin className="w-4 h-4" />,

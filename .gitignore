@@ -25,3 +25,8 @@ lerna-debug.log*
 *.pem
 .vscode/
 .idea/
+
+# Large 3D Models
+*.glb
+*.gltf
+

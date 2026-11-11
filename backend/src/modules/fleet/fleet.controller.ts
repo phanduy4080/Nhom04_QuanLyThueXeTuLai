@@ -23,6 +23,7 @@ import { UpdateModelDto } from './dto/update-model.dto';
 import { QueryModelsDto } from './dto/query-models.dto';
 import { CreateBrandDto } from './dto/create-brand.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
+import { BannerConfigDto } from './dto/banner-config.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -32,6 +33,27 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 @Controller('fleet')
 export class FleetController {
   constructor(private readonly fleetService: FleetService) {}
+
+  @Get('banner')
+  @ApiOperation({ summary: 'Lấy cấu hình Hero Banner 3D trang chủ' })
+  async getBannerConfig() {
+    const data = await this.fleetService.getBannerConfig();
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Lấy cấu hình banner thành công',
+      data,
+    };
+  }
+
+  @Put('banner')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'STAFF')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cập nhật cấu hình Hero Banner 3D trang chủ (Admin/Staff)' })
+  async updateBannerConfig(@Body() body: BannerConfigDto, @CurrentUser() user: any) {
+    const userId = user?.userId || user?.sub || user?.id;
+    return this.fleetService.updateBannerConfig(body, userId ? String(userId) : undefined);
+  }
 
   @Get('vehicles')
   @ApiOperation({ summary: 'US-04: Tìm kiếm xe & Lọc theo tiêu chí (Hãng, Số chỗ, Giá, Ngày thuê, Chi nhánh)' })

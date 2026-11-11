@@ -18,6 +18,7 @@ import { VerifyDocumentsDto } from './dto/verify-documents.dto';
 import { ReviewVerificationDto } from './dto/review-verification.dto';
 import { RejectBookingDto } from './dto/reject-booking.dto';
 import { PayDepositDto } from './dto/pay-deposit.dto';
+import { RequestExtensionDto } from './dto/request-extension.dto';
 
 @Controller('bookings')
 export class BookingsController {
@@ -224,6 +225,53 @@ export class BookingsController {
     return {
       statusCode: 201,
       message: 'Khởi tạo hợp đồng thuê xe điện tử thành công',
+      data,
+    };
+  }
+
+  /**
+   * US-16 & US-17: Khách hàng xem trước thông tin, chi phí và kiểm tra lịch trống tự động trước khi xin gia hạn
+   */
+  @Post(':idOrCode/extend/preview')
+  async previewExtension(
+    @Param('idOrCode') idOrCode: string,
+    @Body() dto: RequestExtensionDto,
+  ) {
+    const data = await this.bookingsService.previewRentalExtension(idOrCode, dto);
+    return {
+      statusCode: 200,
+      message: 'Tính toán chi phí và kiểm tra khả năng gia hạn thành công',
+      data,
+    };
+  }
+
+  /**
+   * US-16 & US-17: Khách hàng gửi yêu cầu gia hạn thời gian thuê xe và hệ thống tự động kiểm tra lịch trống để duyệt / từ chối
+   */
+  @Post(':idOrCode/extend')
+  async requestExtension(
+    @Param('idOrCode') idOrCode: string,
+    @Body() dto: RequestExtensionDto,
+    @Req() req: any,
+  ) {
+    const customerUserId = req.user?.userId;
+    const result = await this.bookingsService.requestRentalExtension(idOrCode, dto, customerUserId);
+    return {
+      statusCode: result.success ? 200 : 409,
+      message: result.message,
+      data: result.extension,
+    };
+  }
+
+  /**
+   * US-16: Lấy lịch sử tất cả các lần gia hạn của đơn đặt xe
+   */
+  @Get(':idOrCode/extensions')
+  async getExtensions(@Param('idOrCode') idOrCode: string) {
+    const data = await this.bookingsService.getBookingExtensions(idOrCode);
+    return {
+      statusCode: 200,
+      message: 'Lấy lịch sử gia hạn thuê xe thành công',
       data,
     };
   }

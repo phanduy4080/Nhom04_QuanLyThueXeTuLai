@@ -32,6 +32,8 @@ import { RejectBookingModal } from '@/components/booking/RejectBookingModal';
 import { HandoverInspectionModal } from '@/components/booking/HandoverInspectionModal';
 import { HandoverProtocolViewModal } from '@/components/booking/HandoverProtocolViewModal';
 import { RentalExtensionModal } from '@/components/booking/RentalExtensionModal';
+import { VehicleReturnModal } from '@/components/booking/VehicleReturnModal';
+import { FinalSettlementModal } from '@/components/booking/FinalSettlementModal';
 
 export default function AdminBookingsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -58,6 +60,12 @@ export default function AdminBookingsPage() {
 
   // US-16 & US-17: Extension Modal
   const [extendingBooking, setExtendingBooking] = useState<BookingResponse | null>(null);
+
+  // US-20, US-21, US-22, US-23: Return Modal
+  const [returningBooking, setReturningBooking] = useState<BookingResponse | null>(null);
+
+  // US-24, US-25: Settlement Modal
+  const [settlingBooking, setSettlingBooking] = useState<BookingResponse | null>(null);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -454,6 +462,30 @@ export default function AdminBookingsPage() {
                           </button>
                         )}
 
+                        {/* US-20 & US-21: Nút Trả Xe & Lập biên bản CHECKIN */}
+                        {b.status === 'IN_RENTAL' && (
+                          <button
+                            onClick={() => setReturningBooking(b)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
+                            title="Đối chiếu ODO, xăng và Lập biên bản hoàn trả xe (US-20, US-21, US-22, US-23)"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>Trả Xe</span>
+                          </button>
+                        )}
+
+                        {/* US-24 & US-25: Nút Quyết Toán Hợp Đồng & Cấn Trừ Cọc */}
+                        {['IN_RENTAL', 'COMPLETED'].includes(b.status) && (
+                          <button
+                            onClick={() => setSettlingBooking(b)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
+                            title="Quyết toán hợp đồng, cấn trừ cọc và hoàn tất (US-24, US-25)"
+                          >
+                            <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>Quyết Toán</span>
+                          </button>
+                        )}
+
                         {/* US-10: Thao tác duyệt hoặc từ chối */}
                         {b.status === 'PENDING' && (
                           <>
@@ -796,6 +828,28 @@ export default function AdminBookingsPage() {
         onClose={() => setExtendingBooking(null)}
         onSuccess={() => {
           setExtendingBooking(null);
+          fetchBookings();
+        }}
+      />
+
+      {/* US-20, US-21, US-22, US-23: Modal Trả Xe & Lập Biên Bản CHECKIN */}
+      <VehicleReturnModal
+        booking={returningBooking}
+        isOpen={Boolean(returningBooking)}
+        onClose={() => setReturningBooking(null)}
+        onSuccess={() => {
+          setReturningBooking(null);
+          fetchBookings();
+        }}
+      />
+
+      {/* US-24 & US-25: Modal Quyết Toán Hợp Đồng & Cấn Trừ Cọc */}
+      <FinalSettlementModal
+        booking={settlingBooking}
+        isOpen={Boolean(settlingBooking)}
+        onClose={() => setSettlingBooking(null)}
+        onSuccess={() => {
+          setSettlingBooking(null);
           fetchBookings();
         }}
       />

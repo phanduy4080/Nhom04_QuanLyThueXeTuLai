@@ -294,6 +294,7 @@ model User {
   liftedBlacklists        CustomerBlacklist[]        @relation("BlacklistLiftedBy")
   reviewedExtensions      RentalExtension[]          @relation("ExtensionReviewedBy")
   assignedIncidents       Incident[]                 @relation("IncidentAssignedStaff")
+  settlements             Settlement[]               @relation("SettledByUser")
 
   @@map("users")
   @@schema("iam")
@@ -548,6 +549,11 @@ model Vehicle {
   gpsDeviceId      String?          @map("gps_device_id")
   isActive         Boolean          @default(true) @map("is_active")
   notes            String?
+  insuranceExpiryDate  DateTime? @map("insurance_expiry_date") @db.Date
+  inspectionExpiryDate DateTime? @map("inspection_expiry_date") @db.Date
+  lastMaintenanceKm    Int       @default(0) @map("last_maintenance_km")
+  nextMaintenanceKm    Int       @default(5000) @map("next_maintenance_km")
+  nextMaintenanceDate  DateTime? @map("next_maintenance_date") @db.Date
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @default(now()) @updatedAt @map("updated_at")
   createdBy        BigInt?          @map("created_by")
@@ -1129,29 +1135,74 @@ model Booking {
   handovers    HandoverRecord[]
   extensions   RentalExtension[]
   incidents    Incident[]
+  settlements  Settlement[]
 
   @@map("bookings")
   @@schema("booking")
 }
 
 model HandoverRecord {
-  handoverId   Int      @id @default(autoincrement()) @map("handover_id")
-  handoverCode String   @unique @map("handover_code") @db.VarChar(50)
-  bookingId    Int      @map("booking_id")
-  vehicleId    BigInt   @map("vehicle_id")
-  staffId      BigInt?  @map("staff_id")
-  type         String   @default("CHECKOUT") @db.VarChar(20)
-  odoMeter     Int      @default(0) @map("odo_meter")
-  fuelLevel    String   @default("100%") @map("fuel_level") @db.VarChar(50)
-  carCondition String?  @map("car_condition")
-  status       String   @default("COMPLETED") @db.VarChar(50)
-  signedAt     DateTime @default(now()) @map("signed_at") @db.Timestamptz(6)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  handoverId       Int       @id @default(autoincrement()) @map("handover_id")
+  handoverCode     String    @unique @map("handover_code") @db.VarChar(50)
+  bookingId        Int       @map("booking_id")
+  vehicleId        BigInt    @map("vehicle_id")
+  staffId          BigInt?   @map("staff_id")
+  type             String    @default("CHECKOUT") @db.VarChar(20)
+  odoMeter         Int       @default(0) @map("odo_meter")
+  fuelLevel        String    @default("100%") @map("fuel_level") @db.VarChar(50)
+  carCondition     String?   @map("car_condition")
+  status           String    @default("COMPLETED") @db.VarChar(50)
+  signedAt         DateTime  @default(now()) @map("signed_at") @db.Timestamptz(6)
+  checkoutId       Int?      @map("checkout_id")
+  actualReturnTime DateTime? @map("actual_return_time") @db.Timestamptz(6)
+  excessKm         Int       @default(0) @map("excess_km")
+  excessKmFee      Decimal   @default(0) @map("excess_km_fee") @db.Decimal(15, 2)
+  lateHours        Int       @default(0) @map("late_hours")
+  lateFee          Decimal   @default(0) @map("late_fee") @db.Decimal(15, 2)
+  fuelShortageFee  Decimal   @default(0) @map("fuel_shortage_fee") @db.Decimal(15, 2)
+  cleaningFee      Decimal   @default(0) @map("cleaning_fee") @db.Decimal(15, 2)
+  newDamages       String?   @map("new_damages")
+  newDamagesFee    Decimal   @default(0) @map("new_damages_fee") @db.Decimal(15, 2)
+  totalPenaltyFee  Decimal   @default(0) @map("total_penalty_fee") @db.Decimal(15, 2)
+  isDisputed       Boolean   @default(false) @map("is_disputed")
+  disputeReason    String?   @map("dispute_reason")
+  inspectionPhotos Json?     @default("[]") @map("inspection_photos")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  booking Booking @relation(fields: [bookingId], references: [bookingId], onDelete: Cascade)
-  vehicle Vehicle @relation(fields: [vehicleId], references: [vehicleId])
+  booking     Booking          @relation(fields: [bookingId], references: [bookingId], onDelete: Cascade)
+  vehicle     Vehicle          @relation(fields: [vehicleId], references: [vehicleId])
+  settlements Settlement[]
 
   @@map("handover_records")
+  @@schema("rental")
+}
+
+model Settlement {
+  settlementId        Int      @id @default(autoincrement()) @map("settlement_id")
+  settlementCode      String   @unique @map("settlement_code") @db.VarChar(50)
+  bookingId           Int      @map("booking_id")
+  handoverId          Int?     @map("handover_id")
+  totalRentalAmount   Decimal  @default(0) @map("total_rental_amount") @db.Decimal(15, 2)
+  totalPenalties      Decimal  @default(0) @map("total_penalties") @db.Decimal(15, 2)
+  damageCompensation  Decimal  @default(0) @map("damage_compensation") @db.Decimal(15, 2)
+  totalPayable        Decimal  @default(0) @map("total_payable") @db.Decimal(15, 2)
+  depositAmount       Decimal  @default(0) @map("deposit_amount") @db.Decimal(15, 2)
+  refundAmount        Decimal  @default(0) @map("refund_amount") @db.Decimal(15, 2)
+  additionalCharge    Decimal  @default(0) @map("additional_charge") @db.Decimal(15, 2)
+  paymentMethod       String?  @default("BANK_TRANSFER") @map("payment_method") @db.VarChar(50)
+  settlementStatus    String   @default("COMPLETED") @map("settlement_status") @db.VarChar(50)
+  notes               String?
+  settledBy           BigInt?  @map("settled_by")
+  settledAt           DateTime @default(now()) @map("settled_at") @db.Timestamptz(6)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  booking   Booking         @relation(fields: [bookingId], references: [bookingId], onDelete: Cascade)
+  handover  HandoverRecord? @relation(fields: [handoverId], references: [handoverId], onDelete: SetNull)
+  settler   User?           @relation("SettledByUser", fields: [settledBy], references: [userId])
+
+  @@index([bookingId], map: "ix_settlements_booking")
+  @@map("settlements")
   @@schema("rental")
 }
 

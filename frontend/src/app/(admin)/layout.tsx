@@ -23,6 +23,8 @@ import {
   MapPin,
   Building2,
   ShieldAlert,
+  Wrench,
+  BarChart3,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toast } from 'sonner';
@@ -79,7 +81,16 @@ export default function AdminLayout({
       name: 'Sự Cố & Bảo Hiểm',
       href: '/admin/incidents',
       icon: <ShieldAlert className="w-5 h-5" />,
-      badge: 'Sprint 7',
+    },
+    {
+      name: 'Bảo Dưỡng & Cảnh Báo',
+      href: '/admin/maintenance',
+      icon: <Wrench className="w-5 h-5" />,
+    },
+    {
+      name: 'Báo Cáo & Thống Kê',
+      href: '/admin/reports',
+      icon: <BarChart3 className="w-5 h-5" />,
     },
     {
       name: 'Khách Hàng & Phân Quyền',

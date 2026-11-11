@@ -114,9 +114,7 @@ export default function AdminIncidentsPage() {
               <ShieldAlert className="w-7 h-7 text-rose-600" />
               Quản Lý Sự Cố & Hồ Sơ Bảo Hiểm
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase bg-rose-100 text-rose-800 border border-rose-200">
-              Sprint 7 • US-18 & US-19
-            </span>
+            
           </div>
           <p className="text-xs text-slate-500 mt-1">
             Tiếp nhận báo cáo sự cố khách hàng, làm việc với giám định bảo hiểm và phân định trách nhiệm chi phí
@@ -328,3 +326,4 @@ export default function AdminIncidentsPage() {
     </div>
   );
 }
+

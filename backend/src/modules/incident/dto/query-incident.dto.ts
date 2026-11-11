@@ -22,3 +22,4 @@ export class QueryIncidentDto {
   @IsOptional()
   bookingId?: number;
 }
+

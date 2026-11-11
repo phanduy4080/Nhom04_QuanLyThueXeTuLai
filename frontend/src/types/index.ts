@@ -136,7 +136,9 @@ export interface Brand {
   brandId: number;
   name: string;
   country?: string;
+  logoUrl?: string | null;
   isActive: boolean;
+  modelsCount?: number;
 }
 
 export interface VehicleCategory {

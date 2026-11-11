@@ -76,8 +76,43 @@ export const carService = {
     return response.data;
   },
 
-  async getBrands(): Promise<ApiResponse<Brand[]>> {
-    const response = await apiClient.get<ApiResponse<Brand[]>>('/fleet/brands');
+  async getBrands(includeInactive = false): Promise<ApiResponse<Brand[]>> {
+    const response = await apiClient.get<ApiResponse<Brand[]>>('/fleet/brands', {
+      params: { includeInactive: includeInactive ? 'true' : 'false' },
+    });
+    return response.data;
+  },
+
+  async getBrandById(id: number): Promise<ApiResponse<Brand>> {
+    const response = await apiClient.get<ApiResponse<Brand>>(`/fleet/brands/${id}`);
+    return response.data;
+  },
+
+  async createBrand(data: {
+    name: string;
+    country?: string;
+    logoUrl?: string;
+    isActive?: boolean;
+  }): Promise<ApiResponse<Brand>> {
+    const response = await apiClient.post<ApiResponse<Brand>>('/fleet/brands', data);
+    return response.data;
+  },
+
+  async updateBrand(
+    id: number,
+    data: Partial<{
+      name: string;
+      country?: string;
+      logoUrl?: string;
+      isActive?: boolean;
+    }>,
+  ): Promise<ApiResponse<Brand>> {
+    const response = await apiClient.put<ApiResponse<Brand>>(`/fleet/brands/${id}`, data);
+    return response.data;
+  },
+
+  async deleteBrand(id: number): Promise<ApiResponse<{ message: string }>> {
+    const response = await apiClient.delete<ApiResponse<{ message: string }>>(`/fleet/brands/${id}`);
     return response.data;
   },
 

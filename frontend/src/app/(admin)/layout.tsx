@@ -25,6 +25,7 @@ import {
   ShieldAlert,
   Wrench,
   BarChart3,
+  Award,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toast } from 'sonner';
@@ -56,6 +57,11 @@ export default function AdminLayout({
       name: 'Quản Lý Đội Xe & Giá',
       href: '/admin/cars',
       icon: <Car className="w-4 h-4" />,
+    },
+    {
+      name: 'Hãng Xe (Brand)',
+      href: '/admin/brands',
+      icon: <Award className="w-4 h-4" />,
     },
     {
       name: 'Dòng Xe (Model)',

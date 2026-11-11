@@ -21,6 +21,8 @@ import { QueryVehiclesDto } from './dto/query-vehicles.dto';
 import { CreateModelDto } from './dto/create-model.dto';
 import { UpdateModelDto } from './dto/update-model.dto';
 import { QueryModelsDto } from './dto/query-models.dto';
+import { CreateBrandDto } from './dto/create-brand.dto';
+import { UpdateBrandDto } from './dto/update-brand.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -132,9 +134,52 @@ export class FleetController {
 
   @Get('brands')
   @ApiOperation({ summary: 'Lấy danh sách các hãng xe (VinFast, Toyota, Mazda...)' })
-  async getBrands() {
-    const data = await this.fleetService.getBrands();
+  async getBrands(@Query('includeInactive') includeInactive?: string) {
+    const data = await this.fleetService.getBrands(includeInactive === 'true');
     return { statusCode: HttpStatus.OK, data };
+  }
+
+  @Get('brands/:id')
+  @ApiOperation({ summary: 'Lấy chi tiết một hãng xe' })
+  async getBrandById(@Param('id', ParseIntPipe) id: number) {
+    const data = await this.fleetService.getBrandById(id);
+    return { statusCode: HttpStatus.OK, data };
+  }
+
+  @Post('brands')
+  @ApiOperation({ summary: 'Admin/Staff: Thêm hãng xe mới' })
+  async createBrand(@Body() dto: CreateBrandDto) {
+    const data = await this.fleetService.createBrand(dto);
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Tạo hãng xe mới thành công',
+      data,
+    };
+  }
+
+  @Put('brands/:id')
+  @ApiOperation({ summary: 'Admin/Staff: Cập nhật thông tin hãng xe' })
+  async updateBrand(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateBrandDto,
+  ) {
+    const data = await this.fleetService.updateBrand(id, dto);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Cập nhật hãng xe thành công',
+      data,
+    };
+  }
+
+  @Delete('brands/:id')
+  @ApiOperation({ summary: 'Admin/Staff: Xóa hoặc ngưng hoạt động hãng xe' })
+  async deleteBrand(@Param('id', ParseIntPipe) id: number) {
+    const result = await this.fleetService.deleteBrand(id);
+    return {
+      statusCode: HttpStatus.OK,
+      message: result.message,
+      data: result,
+    };
   }
 
   @Get('models')

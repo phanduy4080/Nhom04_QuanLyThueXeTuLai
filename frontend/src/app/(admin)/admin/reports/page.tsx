@@ -86,7 +86,7 @@ export default function AdminReportsPage() {
         {/* Tỷ lệ khai thác xe */}
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
           <p className="text-xs uppercase font-medium text-slate-500 tracking-wider">Tỷ Lệ Khai Thác Đội Xe</p>
-          <h3 className="text-2xl font-bold text-emerald-600 mt-1 tracking-tight">
+          <h3 className="text-2xl font-bold text-emerald-700 mt-1 tracking-tight">
             {data?.overview.fleetUtilizationRate || 0}%
           </h3>
           <p className="text-xs text-slate-400 mt-1">
@@ -108,7 +108,7 @@ export default function AdminReportsPage() {
         {/* Tỷ lệ hủy/từ chối */}
         <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
           <p className="text-xs uppercase font-medium text-slate-500 tracking-wider">Tỷ Lệ Hủy / Từ Chối</p>
-          <h3 className="text-2xl font-bold text-rose-600 mt-1 tracking-tight">
+          <h3 className="text-2xl font-bold text-slate-700 mt-1 tracking-tight">
             {data?.overview.cancellationRate || 0}%
           </h3>
           <p className="text-xs text-slate-400 mt-1">Đơn bị huỷ hoặc không đạt yêu cầu</p>
@@ -120,41 +120,41 @@ export default function AdminReportsPage() {
         {/* Phân bố Đội xe */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-            <Car className="w-5 h-5 text-indigo-600" />
+            <Car className="w-5 h-5 text-slate-700" />
             <span>Phân Bố Trạng Thái Đội Xe (Fleet Status)</span>
           </h3>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-            <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-200/60 text-center">
-              <p className="text-xs text-blue-600 font-semibold">Đang Cho Thuê</p>
-              <h4 className="text-2xl font-black text-blue-700 mt-1 font-mono">
+            <div className="bg-amber-50/80 p-3 rounded-xl border border-amber-200 text-center">
+              <p className="text-xs text-amber-800 font-semibold">Đang Cho Thuê</p>
+              <h4 className="text-2xl font-black text-amber-900 mt-1 font-mono">
                 {data?.fleetStatus.rentedCars || 0}
               </h4>
-              <p className="text-[11px] text-blue-600/80 mt-0.5">RENTED</p>
+              <p className="text-[11px] text-amber-700 mt-0.5">RENTED</p>
             </div>
 
-            <div className="bg-purple-50/70 p-3 rounded-xl border border-purple-200/60 text-center">
-              <p className="text-xs text-purple-600 font-semibold">Vệ Sinh / Kỹ Thuật</p>
-              <h4 className="text-2xl font-black text-purple-700 mt-1 font-mono">
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+              <p className="text-xs text-slate-700 font-semibold">Vệ Sinh / Kỹ Thuật</p>
+              <h4 className="text-2xl font-black text-slate-900 mt-1 font-mono">
                 {data?.fleetStatus.inspectingCars || 0}
               </h4>
-              <p className="text-[11px] text-purple-600/80 mt-0.5">INSPECTING</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">INSPECTING</p>
             </div>
 
-            <div className="bg-emerald-50/70 p-3 rounded-xl border border-emerald-200/60 text-center">
-              <p className="text-xs text-emerald-600 font-semibold">Sẵn Sàng Cho Thuê</p>
-              <h4 className="text-2xl font-black text-emerald-700 mt-1 font-mono">
+            <div className="bg-emerald-50/80 p-3 rounded-xl border border-emerald-200 text-center">
+              <p className="text-xs text-emerald-800 font-semibold">Sẵn Sàng Cho Thuê</p>
+              <h4 className="text-2xl font-black text-emerald-800 mt-1 font-mono">
                 {data?.fleetStatus.availableCars || 0}
               </h4>
-              <p className="text-[11px] text-emerald-600/80 mt-0.5">AVAILABLE</p>
+              <p className="text-[11px] text-emerald-700 mt-0.5">AVAILABLE</p>
             </div>
 
-            <div className="bg-amber-50/70 p-3 rounded-xl border border-amber-200/60 text-center">
-              <p className="text-xs text-amber-600 font-semibold">Đang Bảo Dưỡng</p>
-              <h4 className="text-2xl font-black text-amber-700 mt-1 font-mono">
+            <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 text-center">
+              <p className="text-xs text-slate-700 font-semibold">Đang Bảo Dưỡng</p>
+              <h4 className="text-2xl font-black text-slate-800 mt-1 font-mono">
                 {data?.fleetStatus.maintenanceCars || 0}
               </h4>
-              <p className="text-[11px] text-amber-600/80 mt-0.5">MAINTENANCE</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">MAINTENANCE</p>
             </div>
           </div>
 
@@ -210,33 +210,33 @@ export default function AdminReportsPage() {
         {/* Thống kê Sự cố & Bồi thường Bảo hiểm (Sprint 7 & 9) */}
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
           <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-            <Shield className="w-5 h-5 text-indigo-600" />
+            <Shield className="w-5 h-5 text-slate-700" />
             <span>Thống Kê Sự Cố & Chi Phí Bồi Thường (Sprint 7 & 9)</span>
           </h3>
 
           <div className="space-y-3 pt-1">
-            <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl text-xs">
+            <div className="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-xl text-xs">
               <span className="font-medium text-slate-600">Tổng số vụ sự cố ghi nhận</span>
               <span className="font-bold text-slate-900 font-mono text-sm">
                 {data?.incidents.totalIncidents || 0} vụ
               </span>
             </div>
 
-            <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl text-xs text-red-950">
+            <div className="flex justify-between items-center p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-950">
               <span className="font-medium">Tổng giá trị thiệt hại thẩm định</span>
               <span className="font-bold font-mono text-sm">
                 {formatCurrency(data?.incidents.totalDamageCost || 0)}
               </span>
             </div>
 
-            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl text-xs text-blue-950">
+            <div className="flex justify-between items-center p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800">
               <span className="font-medium">Bảo hiểm chi trả bồi thường</span>
-              <span className="font-bold font-mono text-sm text-blue-700">
+              <span className="font-bold font-mono text-sm text-slate-900">
                 {formatCurrency(data?.incidents.insuranceCovered || 0)}
               </span>
             </div>
 
-            <div className="flex justify-between items-center p-3 bg-amber-50 rounded-xl text-xs text-amber-950">
+            <div className="flex justify-between items-center p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-950">
               <span className="font-medium">Khách hàng bồi hoàn trách nhiệm</span>
               <span className="font-bold font-mono text-sm text-amber-800">
                 {formatCurrency(data?.incidents.customerCompensation || 0)}
@@ -265,12 +265,12 @@ export default function AdminReportsPage() {
                     <span
                       className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
                         idx === 0
-                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                          ? 'bg-amber-500 text-slate-950 font-bold'
                           : idx === 1
-                          ? 'bg-slate-200 text-slate-700'
+                          ? 'bg-slate-200 text-slate-800 font-bold'
                           : idx === 2
-                          ? 'bg-orange-100 text-orange-800'
-                          : 'bg-slate-100 text-slate-600'
+                          ? 'bg-slate-100 text-slate-700 font-semibold border border-slate-200'
+                          : 'bg-slate-50 text-slate-600'
                       }`}
                     >
                       {idx + 1}
@@ -281,7 +281,7 @@ export default function AdminReportsPage() {
                     </div>
                   </div>
 
-                  <span className="font-mono font-bold text-emerald-700 text-xs sm:text-sm">
+                  <span className="font-mono font-bold text-slate-900 text-xs sm:text-sm">
                     {formatCurrency(m.revenue)}
                   </span>
                 </div>

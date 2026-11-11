@@ -251,7 +251,7 @@ export function HandoverInspectionModal({
             <div className="flex items-center gap-2 text-xs">
               <div className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 font-medium">
                 <span className="text-slate-400">Hợp đồng liên kết: </span>
-                <strong className="text-indigo-700 font-mono">
+                <strong className="text-slate-800 font-mono">
                   {booking.contractNumber || `HD-${booking.bookingCode}`}
                 </strong>
               </div>
@@ -401,7 +401,7 @@ export function HandoverInspectionModal({
               {/* Nội thất */}
               <div className="p-4 rounded-2xl border border-slate-200 bg-white space-y-2.5">
                 <span className="text-xs font-black uppercase text-slate-800 flex items-center gap-1.5 pb-1 border-b border-slate-100">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   Nội Thất & Tiện Nghi
                 </span>
                 <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
@@ -599,7 +599,7 @@ export function HandoverInspectionModal({
               </div>
 
               <div className="flex items-center gap-2">
-                <label className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-200 transition-colors cursor-pointer">
+                <label className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 transition-colors cursor-pointer">
                   {uploadingPhotos ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   ) : (

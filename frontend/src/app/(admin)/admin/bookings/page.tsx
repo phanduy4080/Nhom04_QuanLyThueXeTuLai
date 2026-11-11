@@ -210,15 +210,15 @@ export default function AdminBookingsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'APPROVED':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-50 text-cyan-700 border border-cyan-200">Đã Duyệt (Chờ Cọc)</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">Đã Duyệt (Chờ Cọc)</span>;
       case 'CONFIRMED':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Đã Cọc (Giữ Xe)</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">Đã Cọc (Giữ Xe)</span>;
       case 'PENDING':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Chờ Duyệt</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">Chờ Duyệt</span>;
       case 'REJECTED':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Đã Từ Chối</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Đã Từ Chối</span>;
       case 'IN_RENTAL':
-        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Đang Thuê</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100/80 text-amber-900 border border-amber-300">Đang Thuê</span>;
       case 'COMPLETED':
         return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">Hoàn Tất</span>;
       case 'CANCELLED':
@@ -368,8 +368,8 @@ export default function AdminBookingsPage() {
                       <div className="space-y-1">
                         <div>{getVerificationBadge(b.verificationStatus)}</div>
                         {b.hasAdditionalDriver ? (
-                          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                            <UserPlus className="w-3 h-3" /> +1 Lái Phụ ({b.additionalDriverName})
+                          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                            +1 Lái Phụ ({b.additionalDriverName})
                           </div>
                         ) : (
                           <span className="text-[11px] text-slate-400 block">Lái xe chính</span>
@@ -386,8 +386,8 @@ export default function AdminBookingsPage() {
                       <div className="flex items-center gap-1 mt-0.5">
                         <span className="text-slate-400">Thời lượng: {b.totalDays} ngày</span>
                         {b.hasActiveExtension && (
-                          <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-teal-100 text-teal-800 border border-teal-200">
-                            +Đã gia hạn
+                          <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                            +Gia hạn
                           </span>
                         )}
                       </div>
@@ -439,7 +439,7 @@ export default function AdminBookingsPage() {
                         {['CONFIRMED', 'IN_RENTAL'].includes(b.status) && (
                           <button
                             onClick={() => setExtendingBooking(b)}
-                            className="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded-md text-xs font-medium transition"
+                            className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium transition"
                             title="Gia hạn thời gian thuê"
                           >
                             Gia Hạn
@@ -450,7 +450,7 @@ export default function AdminBookingsPage() {
                         {b.status === 'CONFIRMED' && (
                           <button
                             onClick={() => handleOpenHandover(b)}
-                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-xs font-semibold transition"
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold rounded-md text-xs transition"
                             title="Lập Biên bản bàn giao giao xe cho khách"
                           >
                             Giao Xe
@@ -461,7 +461,7 @@ export default function AdminBookingsPage() {
                         {b.status === 'IN_RENTAL' && (
                           <button
                             onClick={() => setReturningBooking(b)}
-                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold transition"
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold rounded-md text-xs transition"
                             title="Đối chiếu ODO & nhận lại xe"
                           >
                             Trả Xe
@@ -472,7 +472,7 @@ export default function AdminBookingsPage() {
                         {['IN_RENTAL', 'COMPLETED'].includes(b.status) && (
                           <button
                             onClick={() => setSettlingBooking(b)}
-                            className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md text-xs font-semibold transition"
+                            className="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-semibold rounded-md text-xs transition"
                             title="Quyết toán hợp đồng & cấn trừ cọc"
                           >
                             Quyết Toán
@@ -484,13 +484,13 @@ export default function AdminBookingsPage() {
                           <>
                             <button
                               onClick={() => handleApprove(b.id, b.bookingCode)}
-                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold transition"
+                              className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold rounded-md text-xs transition"
                             >
                               Duyệt Đơn
                             </button>
                             <button
                               onClick={() => handleOpenReject(b)}
-                              className="px-2 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-md text-xs font-medium transition"
+                              className="px-2 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 rounded-md text-xs font-medium transition"
                             >
                               Từ Chối
                             </button>

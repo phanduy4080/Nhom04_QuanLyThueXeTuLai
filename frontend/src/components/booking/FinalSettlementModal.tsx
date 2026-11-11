@@ -127,7 +127,7 @@ export const FinalSettlementModal: React.FC<FinalSettlementModalProps> = ({
               <p className="text-xs text-slate-500 font-medium">Khách hàng & Hợp đồng</p>
               <p className="font-bold text-slate-900">{booking.customerName}</p>
               <p className="text-xs text-slate-600">SĐT: {booking.phone}</p>
-              <p className="text-xs text-indigo-700 font-mono mt-0.5">
+              <p className="text-xs text-slate-500 font-mono mt-0.5">
                 Mã HĐ: {booking.contractNumber || `HD-${booking.bookingCode}`}
               </p>
             </div>
@@ -269,14 +269,14 @@ export const FinalSettlementModal: React.FC<FinalSettlementModalProps> = ({
             Đóng
           </Button>
 
-          <Button
+          <button
             type="button"
             onClick={handleConfirmSettlement}
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5"
+            className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold px-5 py-2 rounded-lg text-sm transition"
           >
             {loading ? 'Đang xử lý...' : 'Xác Nhận Quyết Toán & Kết Thúc Hợp Đồng'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

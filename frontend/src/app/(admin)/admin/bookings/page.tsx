@@ -210,21 +210,21 @@ export default function AdminBookingsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'APPROVED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-100 text-cyan-800 border border-cyan-200 whitespace-nowrap shadow-2xs">Đã Duyệt (Chờ Cọc)</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-50 text-cyan-700 border border-cyan-200">Đã Duyệt (Chờ Cọc)</span>;
       case 'CONFIRMED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 whitespace-nowrap shadow-2xs">Đã Cọc (Giữ Xe)</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Đã Cọc (Giữ Xe)</span>;
       case 'PENDING':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 whitespace-nowrap shadow-2xs">Chờ Nhân Viên Duyệt</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Chờ Duyệt</span>;
       case 'REJECTED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-100 text-rose-800 border border-rose-200 whitespace-nowrap shadow-2xs">Đã Từ Chối</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Đã Từ Chối</span>;
       case 'IN_RENTAL':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 whitespace-nowrap shadow-2xs">Đang Thuê</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Đang Thuê</span>;
       case 'COMPLETED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">Đã Hoàn Tất</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">Hoàn Tất</span>;
       case 'CANCELLED':
-        return <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 text-slate-600 border border-slate-300 whitespace-nowrap shadow-2xs">Đã Hủy</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">Đã Hủy</span>;
       default:
-        return <span className="whitespace-nowrap">{status}</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{status}</span>;
     }
   };
 
@@ -232,20 +232,20 @@ export default function AdminBookingsPage() {
     switch (vStatus) {
       case 'APPROVED':
         return (
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 inline-flex items-center gap-1 shadow-2xs">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Đạt Điều Kiện
           </span>
         );
       case 'REJECTED':
         return (
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-200 inline-flex items-center gap-1 shadow-2xs">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-700 border border-rose-200 inline-flex items-center gap-1">
             <XCircle className="w-3 h-3 text-rose-600" /> Không Đạt
           </span>
         );
       case 'REQUIRES_REVIEW':
       default:
         return (
-          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 inline-flex items-center gap-1 shadow-2xs">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1">
             <Clock className="w-3 h-3 text-amber-600" /> Chờ Đối Chiếu
           </span>
         );
@@ -253,15 +253,15 @@ export default function AdminBookingsPage() {
   };
 
   return (
-    <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
             Quản Lý Đơn Đặt Xe
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Đối chiếu hồ sơ định danh, giấy phép lái xe, người lái phụ và duyệt đơn thuê xe (Sprint 3).
+          <p className="text-xs text-slate-500 mt-1">
+            Đối chiếu hồ sơ GPLX, xét duyệt, bàn giao, nhận trả xe và quyết toán hợp đồng
           </p>
         </div>
 
@@ -269,22 +269,22 @@ export default function AdminBookingsPage() {
           variant="outline"
           size="sm"
           onClick={fetchBookings}
-          leftIcon={<RefreshCw className="w-4 h-4" />}
+          leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
         >
           Làm Mới
         </Button>
       </div>
 
       {/* Filter bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs">
         <div className="sm:col-span-6 relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm theo mã đơn, khách hàng, số điện thoại, người lái phụ..."
-            className="w-full h-11 pl-10 pr-4 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400"
+            className="w-full h-9 pl-9 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 transition"
           />
         </div>
 
@@ -292,15 +292,15 @@ export default function AdminBookingsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full h-11 px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400"
+            className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
           >
-            <option value="ALL">Tất cả trạng thái đơn</option>
-            <option value="PENDING">Chờ Nhân Viên Duyệt (PENDING)</option>
-            <option value="APPROVED">Đã Duyệt - Chờ Khách Cọc (APPROVED)</option>
-            <option value="CONFIRMED">Đã Cọc - Giữ Xe (CONFIRMED)</option>
+            <option value="ALL">Tất cả trạng thái</option>
+            <option value="PENDING">Chờ Duyệt (PENDING)</option>
+            <option value="APPROVED">Đã Duyệt (APPROVED)</option>
+            <option value="CONFIRMED">Đã Cọc (CONFIRMED)</option>
             <option value="IN_RENTAL">Đang Thuê (IN_RENTAL)</option>
-            <option value="COMPLETED">Đã Hoàn Thành (COMPLETED)</option>
-            <option value="REJECTED">Đã Từ Chối (REJECTED)</option>
+            <option value="COMPLETED">Hoàn Tất (COMPLETED)</option>
+            <option value="REJECTED">Từ Chối (REJECTED)</option>
             <option value="CANCELLED">Đã Hủy (CANCELLED)</option>
           </select>
         </div>
@@ -309,12 +309,12 @@ export default function AdminBookingsPage() {
           <select
             value={filterVerification}
             onChange={(e) => setFilterVerification(e.target.value)}
-            className="w-full h-11 px-3 text-sm font-medium bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400"
+            className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
           >
-            <option value="ALL">Tất cả tình trạng hồ sơ</option>
-            <option value="APPROVED">Đạt Điều Kiện (APPROVED)</option>
-            <option value="REQUIRES_REVIEW">Chờ Đối Chiếu (REQUIRES_REVIEW)</option>
-            <option value="REJECTED">Không Đạt (REJECTED)</option>
+            <option value="ALL">Tất cả tình trạng GPLX</option>
+            <option value="APPROVED">GPLX Hợp lệ</option>
+            <option value="REQUIRES_REVIEW">Chờ đối chiếu</option>
+            <option value="REJECTED">GPLX Không đạt</option>
           </select>
         </div>
       </div>
@@ -402,104 +402,95 @@ export default function AdminBookingsPage() {
                       {getStatusBadge(b.status)}
                     </td>
 
-                    <td className="py-4 px-4 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
-                        {/* Nút Xem & Đối chiếu hồ sơ (US-08, US-09) */}
+                        {/* Hồ Sơ */}
                         <button
                           onClick={() => setInspectBooking(b)}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium transition"
                           title="Đối chiếu hồ sơ định danh & GPLX"
                         >
-                          <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
-                          <span>Hồ Sơ</span>
+                          Hồ Sơ
                         </button>
 
-                        {/* US-12: Nút Xem Hợp Đồng */}
+                        {/* Hợp Đồng */}
                         {['APPROVED', 'CONFIRMED', 'IN_RENTAL', 'COMPLETED'].includes(b.status) && (
                           <button
                             onClick={() => handleViewContract(b.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
-                            title="Xem Hợp Đồng Thuê Xe Điện Tử (US-12)"
+                            className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium transition"
+                            title="Xem Hợp Đồng Thuê Xe Điện Tử"
                           >
-                            <FileText className="w-3.5 h-3.5 text-amber-600" />
-                            <span>Hợp Đồng</span>
+                            Hợp Đồng
                           </button>
                         )}
 
-                        {/* US-13, US-14, US-15: Nút Bàn Giao Xe Thực Tế */}
-                        {b.status === 'CONFIRMED' && (
-                          <button
-                            onClick={() => handleOpenHandover(b)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-xs"
-                            title="Kiểm tra xe & Lập Biên bản bàn giao thực tế (Sprint 5)"
-                          >
-                            <KeyRound className="w-3.5 h-3.5" />
-                            <span>Giao Xe</span>
-                          </button>
-                        )}
-
-                        {/* US-14: Nút Xem Biên Bản Bàn Giao nếu xe đang thuê hoặc đã trả */}
+                        {/* Biên Bản Bàn Giao */}
                         {['IN_RENTAL', 'COMPLETED'].includes(b.status) && (
                           <button
                             onClick={() => handleViewHandover(b.id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
-                            title="Xem Biên Bản Bàn Giao Xe Chuẩn Pháp Lý (US-14)"
+                            className="px-2 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-medium transition"
+                            title="Xem Biên Bản Bàn Giao Xe"
                           >
-                            <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Biên Bản</span>
+                            Biên Bản
                           </button>
                         )}
 
-                        {/* US-16 & US-17: Nút Gia Hạn Thuê Xe */}
+                        {/* Gia Hạn */}
                         {['CONFIRMED', 'IN_RENTAL'].includes(b.status) && (
                           <button
                             onClick={() => setExtendingBooking(b)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
-                            title="Gia hạn thuê xe & Tự động duyệt lịch (US-16, US-17)"
+                            className="px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 rounded-md text-xs font-medium transition"
+                            title="Gia hạn thời gian thuê"
                           >
-                            <CalendarPlus className="w-3.5 h-3.5 text-teal-600" />
-                            <span>Gia Hạn</span>
+                            Gia Hạn
                           </button>
                         )}
 
-                        {/* US-20 & US-21: Nút Trả Xe & Lập biên bản CHECKIN */}
+                        {/* Giao Xe Thực Tế */}
+                        {b.status === 'CONFIRMED' && (
+                          <button
+                            onClick={() => handleOpenHandover(b)}
+                            className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-md text-xs font-semibold transition"
+                            title="Lập Biên bản bàn giao giao xe cho khách"
+                          >
+                            Giao Xe
+                          </button>
+                        )}
+
+                        {/* Trả Xe */}
                         {b.status === 'IN_RENTAL' && (
                           <button
                             onClick={() => setReturningBooking(b)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
-                            title="Đối chiếu ODO, xăng và Lập biên bản hoàn trả xe (US-20, US-21, US-22, US-23)"
+                            className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold transition"
+                            title="Đối chiếu ODO & nhận lại xe"
                           >
-                            <KeyRound className="w-3.5 h-3.5" />
-                            <span>Trả Xe</span>
+                            Trả Xe
                           </button>
                         )}
 
-                        {/* US-24 & US-25: Nút Quyết Toán Hợp Đồng & Cấn Trừ Cọc */}
+                        {/* Quyết Toán */}
                         {['IN_RENTAL', 'COMPLETED'].includes(b.status) && (
                           <button
                             onClick={() => setSettlingBooking(b)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-300 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
-                            title="Quyết toán hợp đồng, cấn trừ cọc và hoàn tất (US-24, US-25)"
+                            className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-md text-xs font-semibold transition"
+                            title="Quyết toán hợp đồng & cấn trừ cọc"
                           >
-                            <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
-                            <span>Quyết Toán</span>
+                            Quyết Toán
                           </button>
                         )}
 
-                        {/* US-10: Thao tác duyệt hoặc từ chối */}
+                        {/* Thao tác duyệt / từ chối */}
                         {b.status === 'PENDING' && (
                           <>
                             <button
                               onClick={() => handleApprove(b.id, b.bookingCode)}
-                              className="inline-flex items-center px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shadow-2xs"
-                              title="Duyệt yêu cầu thuê xe của khách hàng"
+                              className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-semibold transition"
                             >
                               Duyệt Đơn
                             </button>
                             <button
                               onClick={() => handleOpenReject(b)}
-                              className="inline-flex items-center px-2 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap border border-rose-200"
-                              title="Từ chối yêu cầu thuê xe"
+                              className="px-2 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-md text-xs font-medium transition"
                             >
                               Từ Chối
                             </button>

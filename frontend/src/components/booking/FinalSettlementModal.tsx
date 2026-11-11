@@ -99,26 +99,21 @@ export const FinalSettlementModal: React.FC<FinalSettlementModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-blue-700 via-indigo-700 to-violet-800 text-white">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
-              <Calculator className="w-6 h-6 text-white" />
+        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-white text-slate-900">
+          <div>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-base font-bold text-slate-900">Quyết Toán Hợp Đồng</h3>
+              <span className="px-2 py-0.5 rounded-full text-xs font-mono font-medium bg-slate-100 text-slate-700">
+                {booking.bookingCode}
+              </span>
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-bold">Quyết Toán Hợp Đồng & Cấn Trừ Cọc (Sprint 10)</h3>
-                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-white/20">
-                  {booking.bookingCode}
-                </span>
-              </div>
-              <p className="text-xs text-white/90">
-                US-24, US-25: Cấn trừ cọc, tính số tiền hoàn trả hoặc thu thêm & kết thúc hợp đồng
-              </p>
-            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Cấn trừ tiền cọc, tính số tiền hoàn trả hoặc thu thêm và hoàn tất thanh lý hợp đồng
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -205,42 +200,33 @@ export const FinalSettlementModal: React.FC<FinalSettlementModalProps> = ({
             </div>
           </div>
 
-          {/* KẾT QUẢ CẤN TRỪ CỌC (HOÀN TRẢ HOẶC THU THÊM) */}
+          {/* KẾT QUẢ CẤN TRỪ CỌC */}
           <div
-            className={`p-5 rounded-2xl border ${
+            className={`p-4 rounded-xl border ${
               isRefund
-                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 text-emerald-950'
-                : 'bg-gradient-to-br from-red-50 to-orange-50 border-red-200 text-red-950'
+                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                : 'bg-rose-50/60 border-rose-200 text-rose-950'
             }`}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div
-                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                    isRefund ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'
-                  }`}
-                >
-                  {isRefund ? <TrendingDown className="w-6 h-6" /> : <TrendingUp className="w-6 h-6" />}
-                </div>
-                <div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Kết quả cấn trừ cọc (US-24)
-                  </span>
-                  <h4 className="text-lg font-black mt-0.5">
-                    {isRefund ? 'HOÀN TRẢ TIỀN CỌC CHO KHÁCH' : 'KHÁCH THANH TOÁN BỔ SUNG'}
-                  </h4>
-                </div>
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                  Kết quả cấn trừ
+                </span>
+                <h4 className="text-base font-bold mt-0.5">
+                  {isRefund ? 'Hoàn trả tiền cọc cho khách hàng' : 'Khách hàng thanh toán bổ sung'}
+                </h4>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {isRefund
+                    ? `Tiền cọc (${formatCurrency(depositAmount)}) trừ chi phí phát sinh (${formatCurrency(extraCharges)})`
+                    : `Chi phí phát sinh (${formatCurrency(extraCharges)}) vượt quá tiền cọc`}
+                </p>
               </div>
 
               <div className="text-right">
-                <span className="text-2xl font-black font-mono">
+                <span className="text-xl font-bold font-mono">
                   {formatCurrency(isRefund ? refundAmount : additionalCharge)}
                 </span>
-                <p className="text-xs opacity-75 mt-0.5">
-                  {isRefund
-                    ? `Cọc (${formatCurrency(depositAmount)}) - Phí phát sinh (${formatCurrency(extraCharges)})`
-                    : `Phí phát sinh (${formatCurrency(extraCharges)}) vượt quá cọc`}
-                </p>
               </div>
             </div>
           </div>
@@ -248,13 +234,13 @@ export const FinalSettlementModal: React.FC<FinalSettlementModalProps> = ({
           {/* Phương thức xử lý & Ghi chú */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 Phương thức {isRefund ? 'hoàn cọc' : 'thu thêm'}
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full p-2.5 border border-slate-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 border border-slate-200 rounded-lg text-xs bg-white outline-none focus:ring-1 focus:ring-slate-400"
               >
                 <option value="BANK_TRANSFER">Chuyển khoản Ngân hàng (VietQR)</option>
                 <option value="CASH">Tiền mặt tại quầy</option>
@@ -263,15 +249,15 @@ export const FinalSettlementModal: React.FC<FinalSettlementModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 mb-1">
                 Ghi chú quyết toán hợp đồng
               </label>
               <input
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="VD: Khách đã xác nhận nhận lại tiền cọc..."
-                className="w-full p-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                placeholder="VD: Khách đã nhận lại tiền cọc..."
+                className="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-1 focus:ring-slate-400"
               />
             </div>
           </div>
@@ -287,19 +273,13 @@ export const FinalSettlementModal: React.FC<FinalSettlementModalProps> = ({
             type="button"
             onClick={handleConfirmSettlement}
             disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 shadow-lg shadow-indigo-600/20"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5"
           >
-            {loading ? (
-              'Đang xử lý...'
-            ) : (
-              <>
-                <FileCheck className="w-4 h-4 mr-2" />
-                Xác Nhận Quyết Toán & Kết Thúc Hợp Đồng (US-25)
-              </>
-            )}
+            {loading ? 'Đang xử lý...' : 'Xác Nhận Quyết Toán & Kết Thúc Hợp Đồng'}
           </Button>
         </div>
       </div>
     </div>
   );
 };
+

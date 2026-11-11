@@ -103,27 +103,24 @@ export default function AdminHandoverPage() {
   });
 
   return (
-    <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <span className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
-              <KeyRound className="w-5 h-5" />
-            </span>
-            <span>Biên Bản Bàn Giao & Nhận Xe (Sprint 5)</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Biên Bản Bàn Giao & Nhận Xe
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Kiểm tra số ODO, mức nhiên liệu/pin, checklist hiện trạng, ghi nhận hư hỏng cũ và tự động chuyển xe sang &apos;Đang cho thuê&apos; (US-13, US-14, US-15).
+          <p className="text-xs text-slate-500 mt-1">
+            Kiểm tra số ODO, mức nhiên liệu/pin, ghi nhận tình trạng xe khi bàn giao (Check-out) và hoàn trả (Check-in)
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchHandovers}
-            leftIcon={<RefreshCw className="w-4 h-4" />}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
           >
             Làm Mới
           </Button>
@@ -132,10 +129,10 @@ export default function AdminHandoverPage() {
             variant="primary"
             size="sm"
             onClick={handleOpenNewHandover}
-            leftIcon={<Plus className="w-4 h-4" />}
-            className="bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-md shadow-amber-500/20"
+            leftIcon={<Plus className="w-3.5 h-3.5" />}
+            className="bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-xs"
           >
-            + Lập Biên Bản Bàn Giao
+            Lập Biên Bản
           </Button>
         </div>
       </div>
@@ -144,39 +141,39 @@ export default function AdminHandoverPage() {
       <div className="flex border-b border-slate-200 gap-6">
         <button
           onClick={() => setActiveTab('CHECKOUT')}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`pb-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'CHECKOUT'
               ? 'border-amber-500 text-amber-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <KeyRound className="w-4 h-4" />
+          <KeyRound className="w-3.5 h-3.5" />
           <span>Giao Xe Cho Khách (Check-out)</span>
         </button>
 
         <button
           onClick={() => setActiveTab('CHECKIN')}
-          className={`pb-3 text-sm font-bold border-b-2 transition-colors cursor-pointer flex items-center gap-2 ${
+          className={`pb-2.5 text-xs font-semibold border-b-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
             activeTab === 'CHECKIN'
               ? 'border-amber-500 text-amber-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <FileCheck className="w-4 h-4" />
+          <FileCheck className="w-3.5 h-3.5" />
           <span>Nhận Xe Trả Lại (Check-in)</span>
         </button>
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-center gap-3">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Tìm theo mã biên bản, mã hợp đồng, mã đơn, khách hàng, biển số xe..."
-            className="w-full h-11 pl-10 pr-4 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400"
+            className="w-full h-9 pl-9 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 transition"
           />
         </div>
       </div>

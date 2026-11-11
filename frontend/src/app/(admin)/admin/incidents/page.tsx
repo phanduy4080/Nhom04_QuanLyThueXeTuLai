@@ -63,38 +63,38 @@ export default function AdminIncidentsPage() {
   const getStatusBadge = (status: IncidentStatus) => {
     switch (status) {
       case 'REPORTED':
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-800">Mới Báo Cáo</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">Mới Báo Cáo</span>;
       case 'UNDER_REVIEW':
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-800">Đang Thẩm Tra</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">Đang Thẩm Tra</span>;
       case 'INSURANCE_PROCESSING':
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-800">Bảo Hiểm Xử Lý</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Bảo Hiểm Xử Lý</span>;
       case 'ASSESSMENT':
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-purple-100 text-purple-800">Giám Định</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">Giám Định</span>;
       case 'DISPUTED':
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-rose-100 text-rose-800">Tranh Chấp</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">Tranh Chấp</span>;
       case 'RESOLVED':
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-100 text-emerald-800">Đã Thỏa Thuận</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Đã Thỏa Thuận</span>;
       case 'CLOSED':
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-slate-200 text-slate-800">Đã Đóng</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 border border-slate-200">Đã Đóng</span>;
       default:
-        return <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-700">{status}</span>;
+        return <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">{status}</span>;
     }
   };
 
   const getTypeBadge = (type: IncidentType) => {
     switch (type) {
       case 'ACCIDENT':
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 text-red-800">Tai Nạn / Va Quẹt</span>;
+        return <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-red-50 text-red-700 border border-red-200">Tai Nạn</span>;
       case 'BREAKDOWN':
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-800">Hỏng Hóc Xe</span>;
+        return <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 text-amber-700 border border-amber-200">Hỏng Hóc Xe</span>;
       case 'LOST_ACCESSORY':
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-orange-100 text-orange-800">Mất Phụ Kiện</span>;
+        return <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-orange-50 text-orange-700 border border-orange-200">Mất Phụ Kiện</span>;
       case 'THEFT':
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-800">Mất Cắp</span>;
+        return <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-purple-50 text-purple-700 border border-purple-200">Mất Cắp</span>;
       case 'TRAFFIC_VIOLATION':
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-800">Vi Phạm GT</span>;
+        return <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">Vi Phạm GT</span>;
       default:
-        return <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-slate-100 text-slate-800">Khác</span>;
+        return <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700">Khác</span>;
     }
   };
 
@@ -109,13 +109,9 @@ export default function AdminIncidentsPage() {
       {/* Title & Quick Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <ShieldAlert className="w-7 h-7 text-rose-600" />
-              Quản Lý Sự Cố & Hồ Sơ Bảo Hiểm
-            </h1>
-            
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Quản Lý Sự Cố & Hồ Sơ Bảo Hiểm
+          </h1>
           <p className="text-xs text-slate-500 mt-1">
             Tiếp nhận báo cáo sự cố khách hàng, làm việc với giám định bảo hiểm và phân định trách nhiệm chi phí
           </p>
@@ -125,7 +121,7 @@ export default function AdminIncidentsPage() {
           variant="outline"
           size="sm"
           onClick={fetchIncidents}
-          leftIcon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+          leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
         >
           Làm Mới
         </Button>
@@ -133,34 +129,34 @@ export default function AdminIncidentsPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs">
-          <p className="text-xs font-bold text-slate-500 uppercase">Tổng số sự cố</p>
-          <p className="text-2xl font-black text-slate-900 mt-1">{totalIncidents}</p>
+        <div className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-xs">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng số sự cố</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">{totalIncidents}</p>
         </div>
-        <div className="p-4 bg-white rounded-2xl border border-amber-200 bg-amber-50/20 shadow-2xs">
-          <p className="text-xs font-bold text-amber-700 uppercase">Chờ xử lý / Thẩm tra</p>
-          <p className="text-2xl font-black text-amber-800 mt-1">{pendingIncidents}</p>
+        <div className="p-4 bg-white rounded-xl border border-amber-200/70 shadow-xs">
+          <p className="text-xs font-medium text-amber-700 uppercase tracking-wider">Chờ xử lý / Thẩm tra</p>
+          <p className="text-2xl font-bold text-amber-700 mt-1 tracking-tight">{pendingIncidents}</p>
         </div>
-        <div className="p-4 bg-white rounded-2xl border border-indigo-200 bg-indigo-50/20 shadow-2xs">
-          <p className="text-xs font-bold text-indigo-700 uppercase">Hồ sơ bảo hiểm</p>
-          <p className="text-2xl font-black text-indigo-800 mt-1">{insuranceIncidents}</p>
+        <div className="p-4 bg-white rounded-xl border border-indigo-200/70 shadow-xs">
+          <p className="text-xs font-medium text-indigo-700 uppercase tracking-wider">Hồ sơ bảo hiểm</p>
+          <p className="text-2xl font-bold text-indigo-700 mt-1 tracking-tight">{insuranceIncidents}</p>
         </div>
-        <div className="p-4 bg-white rounded-2xl border border-emerald-200 bg-emerald-50/20 shadow-2xs">
-          <p className="text-xs font-bold text-emerald-700 uppercase">Đã bồi thường xong</p>
-          <p className="text-2xl font-black text-emerald-800 mt-1">{resolvedIncidents}</p>
+        <div className="p-4 bg-white rounded-xl border border-emerald-200/70 shadow-xs">
+          <p className="text-xs font-medium text-emerald-700 uppercase tracking-wider">Đã bồi thường xong</p>
+          <p className="text-2xl font-bold text-emerald-700 mt-1 tracking-tight">{resolvedIncidents}</p>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs flex flex-col md:flex-row items-center gap-3">
+      <div className="p-3.5 bg-white rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center gap-3">
         <div className="relative flex-1 w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Tìm theo mã sự cố, mã đơn, biển số xe, tên khách..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium outline-none focus:bg-white focus:border-rose-500 transition-all"
+            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-1 focus:ring-slate-400 transition"
           />
         </div>
 
@@ -168,7 +164,7 @@ export default function AdminIncidentsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none"
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:ring-1 focus:ring-slate-400"
           >
             <option value="ALL">Tất cả trạng thái</option>
             <option value="REPORTED">Mới báo cáo</option>
@@ -183,7 +179,7 @@ export default function AdminIncidentsPage() {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none"
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-700 outline-none focus:ring-1 focus:ring-slate-400"
           >
             <option value="ALL">Tất cả loại sự cố</option>
             <option value="ACCIDENT">Tai nạn / Va chạm</option>
@@ -259,17 +255,17 @@ export default function AdminIncidentsPage() {
                           {item.title}
                         </p>
                         <p className="text-[11px] text-slate-500 line-clamp-1" title={item.location}>
-                          📍 {item.location || 'Chưa rõ'}
+                          {item.location || 'Chưa rõ'}
                         </p>
                       </div>
                     </td>
 
                     <td className="py-4 px-4 whitespace-nowrap">
                       <div>
-                        <span className="font-black text-slate-900 block">
+                        <span className="font-bold text-slate-900 block">
                           {formatCurrency(item.totalDamageCost)}
                         </span>
-                        <span className="text-[11px] text-rose-700 font-bold block">
+                        <span className="text-[11px] text-rose-700 font-medium block">
                           Khách: {formatCurrency(item.customerShareAmount)}
                         </span>
                         <span className="text-[10px] text-slate-400">
@@ -280,13 +276,13 @@ export default function AdminIncidentsPage() {
 
                     <td className="py-4 px-4 whitespace-nowrap">
                       <div>
-                        <span className="text-xs font-bold text-indigo-950 block">
+                        <span className="text-xs font-semibold text-slate-900 block">
                           {item.insurerName || 'Chưa nộp'}
                         </span>
                         <span className="text-[11px] font-mono text-indigo-700">
                           {item.insuranceClaimNumber || 'Chưa có mã'}
                         </span>
-                        <span className={`block text-[10px] font-bold ${item.insuranceStatus === 'APPROVED' ? 'text-emerald-700' : 'text-slate-500'}`}>
+                        <span className={`block text-[10px] font-medium ${item.insuranceStatus === 'APPROVED' ? 'text-emerald-700' : 'text-slate-500'}`}>
                           {item.insuranceStatus}
                         </span>
                       </div>
@@ -299,10 +295,9 @@ export default function AdminIncidentsPage() {
                     <td className="py-4 px-4 text-right whitespace-nowrap">
                       <button
                         onClick={() => setSelectedIncident(item)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors shadow-2xs cursor-pointer"
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition"
                       >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Xử Lý Hồ Sơ (US-19)</span>
+                        Xử Lý Hồ Sơ
                       </button>
                     </td>
                   </tr>

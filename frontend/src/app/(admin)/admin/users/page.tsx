@@ -68,13 +68,13 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Khách Hàng & Phân Quyền (IAM)
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          Khách Hàng & Phân Quyền
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Quản lý tài khoản quản trị, nhân viên, khách hàng và duyệt xác minh GPLX / CCCD.
+        <p className="text-xs text-slate-500 mt-1">
+          Quản lý tài khoản quản trị, nhân viên, khách hàng và xác minh giấy phép lái xe
         </p>
       </div>
 

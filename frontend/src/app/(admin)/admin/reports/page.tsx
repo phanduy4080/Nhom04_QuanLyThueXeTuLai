@@ -50,13 +50,10 @@ export default function AdminReportsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 flex items-center space-x-3">
-            <span className="p-2.5 bg-blue-500/10 text-blue-600 rounded-2xl border border-blue-500/20">
-              <BarChart3 className="w-6 h-6" />
-            </span>
-            <span>Báo Cáo & Thống Kê Quản Trị (Sprint 11 - US-28)</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Báo Cáo & Thống Kê Quản Trị
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Tổng quan doanh thu, lượt thuê, tỷ lệ khai thác đội xe, thống kê sự cố/bảo hiểm và các dòng xe thịnh hành
           </p>
         </div>
@@ -68,73 +65,53 @@ export default function AdminReportsPage() {
           className="self-start sm:self-auto flex items-center space-x-2"
           disabled={loading}
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          <span>Làm mới số liệu</span>
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <span>Làm mới</span>
         </Button>
       </div>
 
       {/* KPI Cards: Doanh thu & Lượt thuê */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Tổng doanh thu */}
-        <div className="bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 text-white p-5 rounded-2xl shadow-lg border border-slate-700">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-blue-300">Tổng Doanh Thu</span>
-            <div className="p-2 bg-white/10 rounded-xl">
-              <DollarSign className="w-5 h-5 text-emerald-400" />
-            </div>
-          </div>
-          <h3 className="text-2xl font-black mt-3 font-mono">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+          <p className="text-xs uppercase font-medium text-slate-500 tracking-wider">Tổng Doanh Thu</p>
+          <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
             {formatCurrency(data?.overview.totalRevenue || 0)}
           </h3>
-          <p className="text-xs text-blue-200/80 mt-1">
-            Gồm thuê gốc + gia hạn + tiền phạt vi phạm
+          <p className="text-xs text-slate-400 mt-1">
+            Thuê gốc, gia hạn và phụ phí
           </p>
         </div>
 
         {/* Tỷ lệ khai thác xe */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-slate-500">Tỷ Lệ Khai Thác Đội Xe</span>
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
-              <Percent className="w-5 h-5" />
-            </div>
-          </div>
-          <h3 className="text-3xl font-black text-emerald-600 mt-2 font-mono">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+          <p className="text-xs uppercase font-medium text-slate-500 tracking-wider">Tỷ Lệ Khai Thác Đội Xe</p>
+          <h3 className="text-2xl font-bold text-emerald-600 mt-1 tracking-tight">
             {data?.overview.fleetUtilizationRate || 0}%
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             {data?.fleetStatus.rentedCars || 0} / {data?.fleetStatus.totalFleet || 0} xe đang lăn bánh
           </p>
         </div>
 
         {/* Lượt thuê hoàn tất */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-slate-500">Đơn Thuê Hoàn Tất</span>
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
-          <h3 className="text-3xl font-black text-slate-900 mt-2 font-mono">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+          <p className="text-xs uppercase font-medium text-slate-500 tracking-wider">Đơn Thuê Hoàn Tất</p>
+          <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
             {data?.overview.completedBookings || 0}
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Trên tổng số {data?.overview.totalBookings || 0} đơn đặt xe
           </p>
         </div>
 
         {/* Tỷ lệ hủy/từ chối */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-xs uppercase font-bold text-slate-500">Tỷ Lệ Hủy / Từ Chối</span>
-            <div className="p-2 bg-rose-50 text-rose-600 rounded-xl">
-              <XCircle className="w-5 h-5" />
-            </div>
-          </div>
-          <h3 className="text-3xl font-black text-rose-600 mt-2 font-mono">
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+          <p className="text-xs uppercase font-medium text-slate-500 tracking-wider">Tỷ Lệ Hủy / Từ Chối</p>
+          <h3 className="text-2xl font-bold text-rose-600 mt-1 tracking-tight">
             {data?.overview.cancellationRate || 0}%
           </h3>
-          <p className="text-xs text-slate-500 mt-1">Đơn bị huỷ hoặc không đạt yêu cầu</p>
+          <p className="text-xs text-slate-400 mt-1">Đơn bị huỷ hoặc không đạt yêu cầu</p>
         </div>
       </div>
 
@@ -316,3 +293,4 @@ export default function AdminReportsPage() {
     </div>
   );
 }
+

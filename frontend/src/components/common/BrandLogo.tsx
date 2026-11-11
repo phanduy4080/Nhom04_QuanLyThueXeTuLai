@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Car } from 'lucide-react';
 
 interface BrandLogoProps {
   name: string;
@@ -10,29 +11,37 @@ interface BrandLogoProps {
 }
 
 /**
- * Lấy chữ viết tắt biểu tượng của hãng xe theo đúng thiết kế
+ * Danh sách link logo SVG chính hãng tải từ Wikimedia Commons
  */
-export function getBrandMonogram(name: string): { text: string; isGold?: boolean } {
-  const normalized = (name || '').trim().toUpperCase();
+export const BRAND_DEFAULT_LOGOS: Record<string, string> = {
+  VINFAST: '/brands/vinfast.svg',
+  TOYOTA: '/brands/toyota.svg',
+  MAZDA: '/brands/mazda.svg',
+  HYUNDAI: '/brands/hyundai.svg',
+  MERCEDES: '/brands/mercedes.svg',
+  'MERCEDES-BENZ': '/brands/mercedes.svg',
+  BMW: '/brands/bmw.svg',
+  FORD: '/brands/ford.svg',
+  MITSUBISHI: '/brands/mitsubishi.svg',
+  HONDA: '/brands/honda.svg',
+};
 
-  if (normalized.includes('VINFAST')) return { text: 'VF', isGold: true };
-  if (normalized.includes('TOYOTA')) return { text: 'TOY' };
-  if (normalized.includes('MAZDA')) return { text: 'MZD' };
-  if (normalized.includes('HYUNDAI')) return { text: 'HYU' };
-  if (normalized.includes('MERCEDES')) return { text: 'MB', isGold: true };
-  if (normalized.includes('BMW')) return { text: 'BMW' };
-  if (normalized.includes('FORD')) return { text: 'FORD' };
-  if (normalized.includes('MITSUBISHI')) return { text: 'MIT' };
-  if (normalized.includes('KIA')) return { text: 'KIA' };
-  if (normalized.includes('HONDA')) return { text: 'HND' };
-  if (normalized.includes('AUDI')) return { text: 'AUDI' };
-  if (normalized.includes('PORSCHE')) return { text: 'POR', isGold: true };
-
-  const words = normalized.split(/\s+/);
-  if (words.length >= 2) {
-    return { text: words.slice(0, 3).map((w) => w[0]).join('') };
+/**
+ * Tìm kiếm đường dẫn logo thực tế cho hãng xe
+ */
+export function getBrandLogoUrl(name: string, customLogoUrl?: string | null): string {
+  if (customLogoUrl && customLogoUrl.trim()) {
+    return customLogoUrl.trim();
   }
-  return { text: normalized.slice(0, 3) };
+
+  const normalized = (name || '').trim().toUpperCase();
+  for (const [key, path] of Object.entries(BRAND_DEFAULT_LOGOS)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return path;
+    }
+  }
+
+  return '';
 }
 
 export default function BrandLogo({
@@ -44,38 +53,38 @@ export default function BrandLogo({
   const [imgError, setImgError] = useState(false);
 
   const sizeClasses = {
-    sm: 'w-8 h-8 rounded-lg text-[10px]',
-    md: 'w-12 h-12 rounded-xl text-xs',
-    lg: 'w-14 h-14 rounded-2xl text-sm',
-    xl: 'w-18 h-18 rounded-2xl text-base',
+    sm: 'w-8 h-8 rounded-lg p-1',
+    md: 'w-12 h-12 rounded-xl p-1.5',
+    lg: 'w-14 h-14 sm:w-16 sm:h-16 rounded-2xl p-2.5',
+    xl: 'w-20 h-20 rounded-2xl p-3',
   }[size];
 
-  const monogram = getBrandMonogram(name);
+  const resolvedUrl = getBrandLogoUrl(name, logoUrl);
 
-  if (logoUrl && !imgError) {
+  if (resolvedUrl && !imgError) {
     return (
       <div
-        className={`relative flex items-center justify-center bg-white border border-slate-200 overflow-hidden shadow-2xs ${sizeClasses} ${className}`}
+        className={`relative flex items-center justify-center bg-white border border-slate-200/90 shadow-2xs overflow-hidden transition-all duration-200 hover:border-slate-300 ${sizeClasses} ${className}`}
+        title={name}
       >
         <img
-          src={logoUrl}
-          alt={name}
-          className="w-full h-full object-contain p-1.5"
+          src={resolvedUrl}
+          alt={`Logo ${name}`}
+          className="w-full h-full object-contain filter drop-shadow-xs"
           onError={() => setImgError(true)}
+          loading="lazy"
         />
       </div>
     );
   }
 
-  // Fallback: Biểu tượng Monogram bo góc theo phong cách QuickHatch
+  // Fallback an toàn nếu ảnh hỏng hoàn toàn: icon Car biểu tượng chuyên nghiệp
   return (
     <div
-      className={`flex items-center justify-center font-black tracking-tight select-none shadow-2xs bg-slate-700 border border-slate-600/80 transition-transform ${sizeClasses} ${className}`}
+      className={`flex items-center justify-center bg-slate-100 border border-slate-200 text-slate-700 shadow-2xs ${sizeClasses} ${className}`}
       title={name}
     >
-      <span className={monogram.isGold ? 'text-amber-400 font-extrabold' : 'text-white'}>
-        {monogram.text}
-      </span>
+      <Car className="w-1/2 h-1/2 text-slate-600" />
     </div>
   );
 }

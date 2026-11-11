@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   width="34.564999"
+   height="26.780001"
+   viewBox="0 0 34.565 26.78"
+   enable-background="new 0 0 185.793 27.137"
+   xml:space="preserve">
+<g
+   id="g28">
+	<polygon
+   fill="#fdb911"
+   points="17.268,3.152 15.449,0 0,26.765 3.641,26.765 "
+   id="polygon10" />
+	<polygon
+   fill="#00a650"
+   points="19.085,0 34.532,26.764 3.641,26.764 "
+   id="polygon12" />	
+</g>
+</svg>

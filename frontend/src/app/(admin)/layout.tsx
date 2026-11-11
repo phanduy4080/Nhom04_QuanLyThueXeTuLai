@@ -50,52 +50,52 @@ export default function AdminLayout({
     {
       name: 'Tổng Quan Dashboard',
       href: '/admin/dashboard',
-      icon: <LayoutDashboard className="w-5 h-5" />,
+      icon: <LayoutDashboard className="w-4 h-4" />,
     },
     {
       name: 'Quản Lý Đội Xe & Giá',
       href: '/admin/cars',
-      icon: <Car className="w-5 h-5" />,
+      icon: <Car className="w-4 h-4" />,
     },
     {
       name: 'Dòng Xe (Model)',
       href: '/admin/models',
-      icon: <Layers className="w-5 h-5" />,
+      icon: <Layers className="w-4 h-4" />,
     },
     {
       name: 'Chi Nhánh & Trạm Xe',
       href: '/admin/branches',
-      icon: <MapPin className="w-5 h-5" />,
+      icon: <MapPin className="w-4 h-4" />,
     },
     {
       name: 'Quản Lý Đặt Xe',
       href: '/admin/bookings',
-      icon: <CalendarCheck className="w-5 h-5" />,
+      icon: <CalendarCheck className="w-4 h-4" />,
     },
     {
       name: 'Bàn Giao & Nhận Xe',
       href: '/admin/handover',
-      icon: <KeyRound className="w-5 h-5" />,
+      icon: <KeyRound className="w-4 h-4" />,
     },
     {
       name: 'Sự Cố & Bảo Hiểm',
       href: '/admin/incidents',
-      icon: <ShieldAlert className="w-5 h-5" />,
+      icon: <ShieldAlert className="w-4 h-4" />,
     },
     {
       name: 'Bảo Dưỡng & Cảnh Báo',
       href: '/admin/maintenance',
-      icon: <Wrench className="w-5 h-5" />,
+      icon: <Wrench className="w-4 h-4" />,
     },
     {
       name: 'Báo Cáo & Thống Kê',
       href: '/admin/reports',
-      icon: <BarChart3 className="w-5 h-5" />,
+      icon: <BarChart3 className="w-4 h-4" />,
     },
     {
       name: 'Khách Hàng & Phân Quyền',
       href: '/admin/users',
-      icon: <Users className="w-5 h-5" />,
+      icon: <Users className="w-4 h-4" />,
     },
   ];
 
@@ -106,46 +106,50 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-slate-100/70 flex">
+    <div className="min-h-screen bg-slate-50 flex text-slate-900 antialiased">
       {/* 1. Desktop Sidebar */}
-      <aside className="hidden lg:flex flex-col w-72 bg-gray-950 text-white border-r border-gray-800 shrink-0 z-30">
+      <aside className="hidden lg:flex flex-col w-64 bg-slate-950 text-slate-300 border-r border-slate-800/80 shrink-0 z-30">
         {/* Brand Header */}
-        <div className="h-20 flex items-center justify-between px-6 border-b border-gray-800/80">
-          <Link href="/admin/dashboard" >
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80">
+          <Link href="/admin/dashboard" className="flex items-center gap-2">
             <div className="flex items-baseline">
-              <span className="text-xl font-black text-amber-400 tracking-tight">Quick</span>
-              <span className="text-xl font-black text-white tracking-tight">Hatch</span>
+              <span className="text-lg font-bold text-amber-400 tracking-tight">Quick</span>
+              <span className="text-lg font-bold text-white tracking-tight">Hatch</span>
             </div>
-            
+            <span className="text-[10px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
+              Admin
+            </span>
           </Link>
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-          <div className="px-3 pb-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-            Quản Trị Hệ Thống
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <div className="px-3 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+            Menu Quản Trị
           </div>
 
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href + '/'));
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-bold transition-all duration-150 ${
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-colors ${
                   isActive
-                    ? 'bg-amber-400 text-gray-950 shadow-md shadow-amber-400/10'
-                    : 'text-gray-300 hover:bg-gray-900 hover:text-white'
+                    ? 'bg-amber-400/10 text-amber-400 font-semibold'
+                    : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  {item.icon}
+                  <span className={isActive ? 'text-amber-400' : 'text-slate-400'}>
+                    {item.icon}
+                  </span>
                   <span>{item.name}</span>
                 </div>
                 {item.badge && (
                   <span
-                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                      isActive ? 'bg-black/20 text-gray-950' : 'bg-gray-800 text-amber-400'
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      isActive ? 'bg-amber-400/20 text-amber-300' : 'bg-slate-800 text-slate-400'
                     }`}
                   >
                     {item.badge}
@@ -156,48 +160,44 @@ export default function AdminLayout({
           })}
 
           {/* Quick link to Storefront */}
-          <div className="pt-6 mt-6 border-t border-gray-800/80">
-            <div className="px-3 pb-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Khách Hàng
-            </div>
+          <div className="pt-4 mt-4 border-t border-slate-800/80">
             <Link
               href="/"
               target="_blank"
-              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-gray-300 hover:bg-gray-900 hover:text-amber-400 transition-colors"
+              className="flex items-center justify-between px-3 py-2 rounded-xl text-xs text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <ExternalLink className="w-4 h-4" />
+                <ExternalLink className="w-3.5 h-3.5" />
                 <span>Xem Trang Khách Hàng</span>
               </div>
-              <ChevronRight className="w-3.5 h-3.5 text-gray-500" />
+              <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
             </Link>
           </div>
         </nav>
 
         {/* User Info & Logout Footer */}
-        <div className="p-4 border-t border-gray-800/80 bg-gray-900/50">
+        <div className="p-3 border-t border-slate-800/80 bg-slate-900/40">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-400 text-gray-950 font-black flex items-center justify-center text-sm shadow-xs">
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="w-8 h-8 rounded-lg bg-slate-800 text-slate-200 font-semibold flex items-center justify-center text-xs shrink-0 border border-slate-700">
                 {user?.fullName?.charAt(0) || 'A'}
               </div>
               <div className="overflow-hidden">
-                <p className="text-xs font-bold text-white truncate max-w-[130px]">
+                <p className="text-xs font-semibold text-white truncate max-w-[120px]">
                   {user?.fullName || 'Quản Trị Viên'}
                 </p>
-                <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 font-semibold">
-                  <Shield className="w-3 h-3" />
+                <p className="text-[10px] text-slate-400 truncate">
                   {user?.role || 'ADMIN'}
-                </span>
+                </p>
               </div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="p-2 text-gray-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
               title="Đăng xuất"
             >
-              <LogOut className="w-5 h-5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -206,57 +206,55 @@ export default function AdminLayout({
       {/* 2. Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar */}
-        <header className="h-20 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
+        <header className="h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20">
           {/* Mobile Menu Button */}
           <div className="flex items-center gap-3 lg:hidden">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100"
+              className="p-1.5 rounded-lg text-slate-700 hover:bg-slate-100"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5" />
             </button>
             <div className="flex items-baseline">
-              <span className="text-lg font-black text-amber-500">Quick</span>
-              <span className="text-lg font-black text-gray-900">Hatch</span>
+              <span className="text-base font-bold text-amber-500">Quick</span>
+              <span className="text-base font-bold text-slate-900">Hatch</span>
             </div>
           </div>
 
           {/* Quick Search */}
-          <div className="hidden sm:flex items-center relative w-72 xl:w-96">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5" />
+          <div className="hidden sm:flex items-center relative w-72 lg:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3" />
             <input
               type="text"
-              placeholder="Tìm kiếm nhanh đơn hàng, biển số xe, khách hàng..."
-              className="w-full h-10 pl-10 pr-4 text-xs font-medium bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-amber-400"
+              placeholder="Tìm kiếm nhanh đơn hàng, biển số xe..."
+              className="w-full h-9 pl-9 pr-3 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 transition"
             />
           </div>
 
           {/* Right Header Actions */}
-          <div className="flex items-center gap-4">
-            
-
+          <div className="flex items-center gap-3">
             <button
-              className="p-2.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors relative"
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors relative"
               title="Thông báo"
             >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full" />
+              <Bell className="w-4 h-4" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full" />
             </button>
 
-            <div className="flex items-center gap-3 pl-3 border-l border-slate-200">
+            <div className="flex items-center gap-2.5 pl-3 border-l border-slate-200">
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-900">{user?.fullName || 'Trần Văn Quản Trị'}</p>
-                <p className="text-[11px] text-slate-400">admin@quickhatch.vn</p>
+                <p className="text-xs font-semibold text-slate-800">{user?.fullName || 'Quản Trị Viên'}</p>
+                <p className="text-[10px] text-slate-400">{user?.role || 'Admin'}</p>
               </div>
-              <div className="w-9 h-9 rounded-xl bg-amber-400 text-gray-950 font-black flex items-center justify-center text-xs">
+              <div className="w-8 h-8 rounded-lg bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-xs">
                 {user?.fullName?.charAt(0) || 'A'}
               </div>
             </div>
           </div>
         </header>
 
-        {/* Page Body */}
-        <main className="flex-1 overflow-y-auto">
+        {/* Page Body with consistent padding and max width */}
+        <main className="flex-1 overflow-y-auto p-6 lg:p-8 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>
@@ -265,18 +263,18 @@ export default function AdminLayout({
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-black/40 backdrop-blur-xs"
             onClick={() => setMobileSidebarOpen(false)}
           />
-          <div className="relative flex flex-col w-72 bg-gray-950 text-white p-5 space-y-6 z-10">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-800">
-              <span className="text-xl font-black text-amber-400">QuickHatch Admin</span>
+          <div className="relative flex flex-col w-64 bg-slate-950 text-slate-300 p-4 space-y-4 z-10">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <span className="text-base font-bold text-amber-400">QuickHatch Admin</span>
               <button onClick={() => setMobileSidebarOpen(false)}>
-                <X className="w-6 h-6 text-gray-400" />
+                <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
 
-            <nav className="space-y-2 flex-1">
+            <nav className="space-y-1 flex-1 overflow-y-auto">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -284,8 +282,8 @@ export default function AdminLayout({
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-bold ${
-                      isActive ? 'bg-amber-400 text-gray-950' : 'text-gray-300 hover:bg-gray-900'
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-medium ${
+                      isActive ? 'bg-amber-400/10 text-amber-400 font-semibold' : 'text-slate-400 hover:bg-slate-900'
                     }`}
                   >
                     {item.icon}
@@ -297,7 +295,7 @@ export default function AdminLayout({
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 text-sm font-bold text-rose-400 py-3 border-t border-gray-800"
+              className="flex items-center gap-2 text-xs font-medium text-rose-400 py-2.5 border-t border-slate-800"
             >
               <LogOut className="w-4 h-4" />
               <span>Đăng Xuất</span>

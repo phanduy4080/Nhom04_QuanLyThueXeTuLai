@@ -89,16 +89,15 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <div className="p-6 sm:p-10 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-gray-950 via-slate-900 to-gray-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl">
-        <div className="space-y-2">
-          
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-800">
+        <div className="space-y-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
             Xin Chào, Quản Trị Viên!
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-            Hôm nay có <strong>{availableCars} xe sẵn sàng</strong> phục vụ khách hàng. Hệ thống vận hành ổn định.
+          <p className="text-xs text-slate-300 max-w-xl">
+            Hôm nay có <strong>{availableCars} xe sẵn sàng</strong> cho thuê. Hệ thống vận hành bình thường.
           </p>
         </div>
 
@@ -106,8 +105,9 @@ export default function AdminDashboardPage() {
           <Link href="/admin/cars">
             <Button
               variant="primary"
-              size="md"
-              leftIcon={<Plus className="w-4 h-4" />}
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-semibold"
             >
               Thêm Xe Mới
             </Button>
@@ -116,26 +116,26 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* 4 Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, idx) => (
           <div
             key={idx}
-            className={`p-5 rounded-3xl border bg-white shadow-2xs hover:shadow-md transition-shadow duration-200 flex flex-col justify-between space-y-3`}
+            className="p-4 rounded-xl border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between space-y-2"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
                 {stat.title}
               </span>
-              <div className={`p-2.5 rounded-2xl ${stat.color} border`}>
+              <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-slate-600">
                 {stat.icon}
               </div>
             </div>
 
             <div>
-              <div className="text-2xl font-black text-slate-900 tracking-tight">
+              <div className="text-2xl font-bold text-slate-900 tracking-tight">
                 {stat.value}
               </div>
-              <p className="text-xs text-slate-400 font-medium mt-1">{stat.subtext}</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">{stat.subtext}</p>
             </div>
           </div>
         ))}

@@ -157,27 +157,25 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100">
+      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              
-              <span className="text-xs text-white/80 font-medium">
-                Mã đơn: #{booking.bookingCode}
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900">
+                Thông Báo Sự Cố Phát Sinh
+              </h2>
+              <span className="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded">
+                #{booking.bookingCode}
               </span>
             </div>
-            <h2 className="text-xl font-black flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-amber-300" />
-              Thông Báo Sự Cố Xe Trong Quá Trình Thuê
-            </h2>
-            <p className="text-xs text-white/90 mt-1">
-              Gửi hình ảnh và mô tả để đội cứu hộ & giám định viên bảo hiểm hỗ trợ ngay
+            <p className="text-xs text-slate-500 mt-0.5">
+              Gửi hình ảnh và mô tả để đội cứu hộ & giám định viên bảo hiểm hỗ trợ kịp thời
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

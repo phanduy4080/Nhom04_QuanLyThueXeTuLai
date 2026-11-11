@@ -82,13 +82,10 @@ export default function AdminMaintenancePage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 flex items-center space-x-3">
-            <span className="p-2.5 bg-amber-500/10 text-amber-600 rounded-2xl border border-amber-500/20">
-              <Wrench className="w-6 h-6" />
-            </span>
-            <span>Bảo Dưỡng & Cảnh Báo Bảo Hiểm (Sprint 11 - US-27)</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Bảo Dưỡng & Cảnh Báo Bảo Hiểm
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Theo dõi hạn bảo hiểm, đăng kiểm & chu kỳ bảo dưỡng xe theo km, nhận cảnh báo tự động
           </p>
         </div>
@@ -100,85 +97,65 @@ export default function AdminMaintenancePage() {
           className="self-start sm:self-auto flex items-center space-x-2"
           disabled={loading}
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           <span>Làm mới</span>
         </Button>
       </div>
 
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Tổng Đội Xe</p>
-            <h3 className="text-3xl font-black text-slate-900 mt-1">
-              {data?.summary.totalVehicles || 0}
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">Đang hoạt động trên hệ thống</p>
-          </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-            <Car className="w-6 h-6" />
-          </div>
+        <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng Đội Xe</p>
+          <h3 className="text-2xl font-bold text-slate-900 mt-1 tracking-tight">
+            {data?.summary.totalVehicles || 0}
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">Đang hoạt động trên hệ thống</p>
         </div>
 
         <div
           onClick={() => setFilterSeverity('CRITICAL')}
-          className="bg-white p-5 rounded-2xl border border-red-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-red-400 transition-all"
+          className="bg-white p-4 rounded-xl border border-red-200 shadow-xs cursor-pointer hover:border-red-300 transition"
         >
-          <div>
-            <p className="text-xs font-semibold text-red-600 uppercase tracking-wider">Cảnh Báo Nguy Cấp</p>
-            <h3 className="text-3xl font-black text-red-600 mt-1">
-              {data?.summary.criticalAlerts || 0}
-            </h3>
-            <p className="text-xs text-red-500 mt-1">Hạn &le; 7 ngày hoặc &le; 300 km</p>
-          </div>
-          <div className="p-3 bg-red-100 text-red-700 rounded-xl animate-pulse">
-            <ShieldAlert className="w-6 h-6" />
-          </div>
+          <p className="text-xs font-medium text-red-600 uppercase tracking-wider">Cảnh Báo Nguy Cấp</p>
+          <h3 className="text-2xl font-bold text-red-600 mt-1 tracking-tight">
+            {data?.summary.criticalAlerts || 0}
+          </h3>
+          <p className="text-xs text-red-500 mt-1">Hạn &le; 7 ngày hoặc &le; 300 km</p>
         </div>
 
         <div
           onClick={() => setFilterSeverity('WARNING')}
-          className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-amber-400 transition-all"
+          className="bg-white p-4 rounded-xl border border-amber-200 shadow-xs cursor-pointer hover:border-amber-300 transition"
         >
-          <div>
-            <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider">Cần Lưu Ý Sớm</p>
-            <h3 className="text-3xl font-black text-amber-600 mt-1">
-              {data?.summary.warningAlerts || 0}
-            </h3>
-            <p className="text-xs text-amber-600 mt-1">Hạn &le; 30 ngày hoặc &le; 1.000 km</p>
-          </div>
-          <div className="p-3 bg-amber-100 text-amber-700 rounded-xl">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
+          <p className="text-xs font-medium text-amber-600 uppercase tracking-wider">Cần Lưu Ý Sớm</p>
+          <h3 className="text-2xl font-bold text-amber-600 mt-1 tracking-tight">
+            {data?.summary.warningAlerts || 0}
+          </h3>
+          <p className="text-xs text-amber-600 mt-1">Hạn &le; 30 ngày hoặc &le; 1.000 km</p>
         </div>
 
         <div
           onClick={() => setFilterSeverity('ALL')}
-          className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm flex items-center justify-between cursor-pointer hover:border-emerald-400 transition-all"
+          className="bg-white p-4 rounded-xl border border-emerald-200 shadow-xs cursor-pointer hover:border-emerald-300 transition"
         >
-          <div>
-            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Đội Xe An Toàn</p>
-            <h3 className="text-3xl font-black text-emerald-600 mt-1">
-              {data?.summary.safeCount || 0}
-            </h3>
-            <p className="text-xs text-emerald-600 mt-1">Bảo hiểm & bảo dưỡng đầy đủ</p>
-          </div>
-          <div className="p-3 bg-emerald-100 text-emerald-700 rounded-xl">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
+          <p className="text-xs font-medium text-emerald-600 uppercase tracking-wider">Đội Xe An Toàn</p>
+          <h3 className="text-2xl font-bold text-emerald-600 mt-1 tracking-tight">
+            {data?.summary.safeCount || 0}
+          </h3>
+          <p className="text-xs text-emerald-600 mt-1">Bảo hiểm & bảo dưỡng đầy đủ</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
             placeholder="Tìm theo biển số, dòng xe, chi nhánh..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs md:text-sm focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+            className="w-full pl-9 pr-3 py-1.5 border border-slate-200 rounded-lg text-xs outline-none focus:bg-white focus:ring-1 focus:ring-slate-400 transition"
           />
         </div>
 
@@ -213,7 +190,7 @@ export default function AdminMaintenancePage() {
             onClick={() => setFilterSeverity('INSPECTING')}
             className="text-xs border-indigo-200 text-indigo-700"
           >
-            Đang kiểm tra/vệ sinh (US-26)
+            Đang kiểm tra/vệ sinh
           </Button>
         </div>
       </div>

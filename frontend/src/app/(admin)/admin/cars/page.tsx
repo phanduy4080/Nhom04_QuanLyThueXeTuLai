@@ -446,26 +446,24 @@ export default function AdminCarsPage() {
   };
 
   return (
-    <div className="p-6 sm:p-10 max-w-7xl mx-auto">
+    <div className="space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Quản Lý Đội Xe & Bảng Giá
-            </h1>
-          </div>
-          <p className="text-sm text-slate-500 mt-1">
-            Quản lý thông tin chi tiết xe, cập nhật trạng thái vận hành và chính sách giá thuê theo ngày.
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            Quản Lý Đội Xe & Bảng Giá
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Quản lý thông tin chi tiết xe, cập nhật trạng thái vận hành và chính sách giá thuê theo ngày
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            size="md"
+            size="sm"
             onClick={fetchCars}
-            leftIcon={<RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />}
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
           >
             Làm mới
           </Button>

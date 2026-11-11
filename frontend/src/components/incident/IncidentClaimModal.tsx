@@ -147,27 +147,25 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[94vh] flex flex-col shadow-2xl overflow-hidden border border-slate-100">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200">
         {/* Header */}
-        <div className="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-             
-              <span className="text-xs text-slate-300 font-mono">
-                Mã: {incident.incidentCode}
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900">
+                Hồ Sơ Sự Cố & Phân Định Chi Phí
+              </h2>
+              <span className="text-xs text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded">
+                {incident.incidentCode}
               </span>
             </div>
-            <h2 className="text-xl font-black flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-amber-400" />
-              Lập Hồ Sơ Sự Cố & Phân Định Chi Phí Bồi Thường
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              Đơn thuê #{incident.bookingCode} • Xe: {incident.carName} ({incident.licensePlate}) • Khách hàng: {incident.customerName}
+            <p className="text-xs text-slate-500 mt-0.5">
+              Đơn #{incident.bookingCode} • Xe: {incident.carName} ({incident.licensePlate}) • Khách: {incident.customerName}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>

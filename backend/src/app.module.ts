@@ -11,6 +11,7 @@ import { OrgModule } from './modules/org/org.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
 import { RentalModule } from './modules/rental/rental.module';
+import { IncidentModule } from './modules/incident/incident.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { RentalModule } from './modules/rental/rental.module';
     UploadModule,
     BookingsModule,
     RentalModule,
+    IncidentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

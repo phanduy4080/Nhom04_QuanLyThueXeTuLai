@@ -22,6 +22,7 @@ import {
   Layers,
   MapPin,
   Building2,
+  ShieldAlert,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toast } from 'sonner';
@@ -73,6 +74,12 @@ export default function AdminLayout({
       name: 'Bàn Giao & Nhận Xe',
       href: '/admin/handover',
       icon: <KeyRound className="w-5 h-5" />,
+    },
+    {
+      name: 'Sự Cố & Bảo Hiểm',
+      href: '/admin/incidents',
+      icon: <ShieldAlert className="w-5 h-5" />,
+      badge: 'Sprint 7',
     },
     {
       name: 'Khách Hàng & Phân Quyền',

@@ -61,57 +61,6 @@ export default function HeroBanner() {
             </form>
           </div>
         </div>
-
-        {/* Brand Logos Row */}
-        <div className="mt-14 max-w-5xl mx-auto flex flex-wrap items-center justify-around gap-8 py-6 opacity-60 hover:opacity-100 transition-opacity">
-          {/* VinFast */}
-          <div className="text-center flex flex-col items-center">
-            <span className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
-              VF
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">VinFast</span>
-          </div>
-
-          {/* Toyota */}
-          <div className="text-center flex flex-col items-center">
-            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
-              TOY
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Toyota</span>
-          </div>
-
-          {/* Mazda */}
-          <div className="text-center flex flex-col items-center">
-            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
-              MZD
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Mazda</span>
-          </div>
-
-          {/* Hyundai */}
-          <div className="text-center flex flex-col items-center">
-            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
-              HYU
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Hyundai</span>
-          </div>
-
-          {/* Mercedes */}
-          <div className="text-center flex flex-col items-center">
-            <span className="w-10 h-10 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
-              MB
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">Mercedes</span>
-          </div>
-
-          {/* BMW */}
-          <div className="text-center flex flex-col items-center">
-            <span className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xs font-black mb-1.5 shadow-xs">
-              BMW
-            </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700">BMW</span>
-          </div>
-        </div>
       </div>
     </section>
   );

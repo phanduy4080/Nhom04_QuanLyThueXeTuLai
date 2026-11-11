@@ -94,7 +94,7 @@ export default function StorefrontHomePage() {
           </div>
 
           {/* Brands list */}
-          <div className="flex items-center justify-start md:justify-center gap-6 sm:gap-10 overflow-x-auto pb-2">
+          <div className="flex items-center justify-start md:justify-center gap-6 sm:gap-10 overflow-x-auto pb-2 pt">
             {brands.map((brand) => {
               const isSelected = selectedBrandId === brand.brandId;
               return (

@@ -162,9 +162,7 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
         <div className="p-6 bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 text-white flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-white/20 text-white">
-                Sprint 7 • US-18
-              </span>
+              
               <span className="text-xs text-white/80 font-medium">
                 Mã đơn: #{booking.bookingCode}
               </span>
@@ -380,3 +378,4 @@ export const ReportIncidentModal: React.FC<ReportIncidentModalProps> = ({
     </div>
   );
 };
+

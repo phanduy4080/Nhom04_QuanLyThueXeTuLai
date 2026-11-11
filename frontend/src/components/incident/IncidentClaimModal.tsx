@@ -152,9 +152,7 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
         <div className="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-indigo-500/30 text-indigo-300 border border-indigo-500/40">
-                Sprint 7 • US-19 Hồ Sơ Sự Cố & Bảo Hiểm
-              </span>
+             
               <span className="text-xs text-slate-300 font-mono">
                 Mã: {incident.incidentCode}
               </span>
@@ -540,3 +538,4 @@ export const IncidentClaimModal: React.FC<IncidentClaimModalProps> = ({
     </div>
   );
 };
+

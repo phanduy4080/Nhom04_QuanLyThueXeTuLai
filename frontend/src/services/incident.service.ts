@@ -133,3 +133,4 @@ export const incidentService = {
     return res.data;
   },
 };
+

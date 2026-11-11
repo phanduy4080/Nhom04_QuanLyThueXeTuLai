@@ -90,3 +90,4 @@ export class UpdateIncidentClaimDto {
   @IsString()
   resolutionNotes?: string;
 }
+

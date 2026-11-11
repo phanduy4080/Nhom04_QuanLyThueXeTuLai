@@ -46,3 +46,4 @@ export class CreateIncidentDto {
   @IsArray()
   evidencePhotos?: string[];
 }
+
